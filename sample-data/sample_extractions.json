@@ -1,0 +1,77 @@
+[
+  {
+    "original_text": "Red Toyota Camry license plate ABC123 was involved in a hit and run accident at Main Street and 5th Avenue. Driver John Smith fled the scene.",
+    "extracted_info": {
+      "person_name": "John Smith",
+      "vehicle_number": "ABC123",
+      "car_color": "red",
+      "car_model": "toyota",
+      "location": "Main Street and 5th Avenue",
+      "event_crime_violation": "hit and run accident"
+    },
+    "has_audio": false,
+    "created_at": {
+      "$date": "2024-07-25T10:30:00.000Z"
+    }
+  },
+  {
+    "original_text": "Suspicious activity reported near the bank on Oak Street. White BMW X5 plate XYZ789 seen circling the building multiple times.",
+    "extracted_info": {
+      "person_name": null,
+      "vehicle_number": "XYZ789",
+      "car_color": "white",
+      "car_model": "bmw",
+      "location": "Oak Street bank",
+      "event_crime_violation": "suspicious activity"
+    },
+    "has_audio": true,
+    "created_at": {
+      "$date": "2024-07-25T14:15:00.000Z"
+    }
+  },
+  {
+    "original_text": "Speeding violation on Highway 101. Blue Honda Civic license DEF456 clocked at 85 mph in a 65 mph zone. Driver Sarah Johnson was issued a citation.",
+    "extracted_info": {
+      "person_name": "Sarah Johnson",
+      "vehicle_number": "DEF456",
+      "car_color": "blue",
+      "car_model": "honda",
+      "location": "Highway 101",
+      "event_crime_violation": "speeding"
+    },
+    "has_audio": false,
+    "created_at": {
+      "$date": "2024-07-25T16:45:00.000Z"
+    }
+  },
+  {
+    "original_text": "Theft reported at the shopping mall parking lot. Black Ford F-150 license GHI789 was seen near the scene. Suspect description: tall male, wearing dark clothing.",
+    "extracted_info": {
+      "person_name": null,
+      "vehicle_number": "GHI789",
+      "car_color": "black",
+      "car_model": "ford",
+      "location": "shopping mall parking lot",
+      "event_crime_violation": "theft"
+    },
+    "has_audio": true,
+    "created_at": {
+      "$date": "2024-07-26T09:20:00.000Z"
+    }
+  },
+  {
+    "original_text": "Parking violation on Elm Street. Silver Mercedes C300 plate JKL012 parked in a fire lane for over 2 hours.",
+    "extracted_info": {
+      "person_name": null,
+      "vehicle_number": "JKL012",
+      "car_color": "silver",
+      "car_model": "mercedes",
+      "location": "Elm Street",
+      "event_crime_violation": "parking violation"
+    },
+    "has_audio": false,
+    "created_at": {
+      "$date": "2024-07-26T11:10:00.000Z"
+    }
+  }
+]
