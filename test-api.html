@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Test Page</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testParameters()">Test Parameters</button>
+    <button onclick="testParseMessage()">Test Parse Message</button>
+    <div id="results"></div>
+
+    <script>
+        let token = null;
+        
+        async function testLogin() {
+            try {
+                const response = await fetch('http://localhost:8650/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'Apple@123'
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Login response:', data);
+                
+                if (data.access_token) {
+                    token = data.access_token;
+                    document.getElementById('results').innerHTML = '<p>Login successful! Token: ' + token.substring(0, 50) + '...</p>';
+                } else {
+                    document.getElementById('results').innerHTML = '<p>Login failed: ' + JSON.stringify(data) + '</p>';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                document.getElementById('results').innerHTML = '<p>Login error: ' + error.message + '</p>';
+            }
+        }
+        
+        async function testParameters() {
+            if (!token) {
+                document.getElementById('results').innerHTML = '<p>Please login first</p>';
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8650/api/admin/parameters', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                console.log('Parameters response:', data);
+                document.getElementById('results').innerHTML = '<p>Parameters count: ' + data.data.length + '</p><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                console.error('Parameters error:', error);
+                document.getElementById('results').innerHTML = '<p>Parameters error: ' + error.message + '</p>';
+            }
+        }
+        
+        async function testParseMessage() {
+            try {
+                const formData = new FormData();
+                formData.append('message', 'The suspect John Doe was driving a red Toyota Camry with license plate ABC-123 near Central Park when the incident occurred.');
+                
+                const response = await fetch('http://localhost:8650/api/public/parse-message', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                console.log('Parse message response:', data);
+                document.getElementById('results').innerHTML = '<p>Message parsed successfully!</p><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                console.error('Parse message error:', error);
+                document.getElementById('results').innerHTML = '<p>Parse message error: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>

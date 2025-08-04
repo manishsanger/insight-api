@@ -22,16 +22,20 @@ A REST API service for processing audio files and text messages to extract struc
 
 ### Authentication
 
-- `POST /auth/login` - Authenticate and get JWT token
+- `POST /api/auth/login` - Authenticate and get JWT token
 
 ### Admin APIs (Requires JWT)
 
-- `GET /admin/parameters` - List extraction parameters
-- `POST /admin/parameters` - Create new parameter
-- `PUT /admin/parameters/{id}` - Update parameter
-- `DELETE /admin/parameters/{id}` - Delete parameter
-- `GET /admin/requests` - List API requests with pagination
-- `GET /admin/dashboard` - Get dashboard statistics
+- `GET /api/admin/parameters` - List extraction parameters
+- `POST /api/admin/parameters` - Create new parameter
+- `PUT /api/admin/parameters/{id}` - Update parameter
+- `DELETE /api/admin/parameters/{id}` - Delete parameter
+- `GET /api/admin/requests` - List API requests with pagination
+- `GET /api/admin/users` - List users with pagination
+- `POST /api/admin/users` - Create new user
+- `PUT /api/admin/users/{id}` - Update user
+- `DELETE /api/admin/users/{id}` - Delete user
+- `GET /api/admin/dashboard` - Get dashboard statistics
 
 ## Default Extraction Parameters
 
@@ -72,14 +76,14 @@ curl -X POST http://localhost:8650/api/parse-message \
 
 ### Admin Login
 ```bash
-curl -X POST http://localhost:8650/auth/login \
+curl -X POST http://localhost:8650/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username": "admin", "password": "Apple@123"}'
 ```
 
 ### Get Parameters (Admin)
 ```bash
-curl -X GET http://localhost:8650/admin/parameters \
+curl -X GET http://localhost:8650/api/admin/parameters \
   -H "Authorization: Bearer <jwt-token>"
 ```
 

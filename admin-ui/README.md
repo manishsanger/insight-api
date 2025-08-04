@@ -110,13 +110,17 @@ The admin UI connects to the Officer Insight API using the base URL configured i
 - **Production**: Configurable via REACT_APP_API_BASE_URL
 
 ### Endpoints Used
-- `POST /auth/login` - Authentication
-- `GET /admin/parameters` - Parameter management
-- `POST /admin/parameters` - Create parameters
-- `PUT /admin/parameters/{id}` - Update parameters
-- `DELETE /admin/parameters/{id}` - Delete parameters
-- `GET /admin/requests` - Request monitoring
-- `GET /admin/dashboard` - Dashboard data
+- `POST /api/auth/login` - Authentication
+- `GET /api/admin/parameters` - Parameter management
+- `POST /api/admin/parameters` - Create parameters
+- `PUT /api/admin/parameters/{id}` - Update parameters
+- `DELETE /api/admin/parameters/{id}` - Delete parameters
+- `GET /api/admin/requests` - Request monitoring
+- `GET /api/admin/users` - User management
+- `POST /api/admin/users` - Create users
+- `PUT /api/admin/users/{id}` - Update users
+- `DELETE /api/admin/users/{id}` - Delete users
+- `GET /api/admin/dashboard` - Dashboard data
 - `GET /admin/users` - User management
 
 ## Running Locally

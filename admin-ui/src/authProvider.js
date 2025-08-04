@@ -3,28 +3,22 @@ import axios from 'axios';
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8650';
 
 const authProvider = {
-  login: async ({ username, password }) => {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-        username,
-        password,
+  login: ({ username, password }) => {
+    return axios.post(`${API_BASE_URL}/api/login`, {
+      username,
+      password,
+    })
+      .then(response => {
+        if (response.data.access_token) {
+          localStorage.setItem('token', response.data.access_token);
+          localStorage.setItem('role', response.data.role);
+          return Promise.resolve();
+        }
+        return Promise.reject();
+      })
+      .catch(() => {
+        return Promise.reject();
       });
-
-      const { access_token, role } = response.data;
-      
-      if (role !== 'admin') {
-        throw new Error('Access denied. Admin role required.');
-      }
-
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('role', role);
-      localStorage.setItem('username', username);
-      
-      return Promise.resolve();
-    } catch (error) {
-      const message = error.response?.data?.message || error.message || 'Login failed';
-      return Promise.reject(new Error(message));
-    }
   },
 
   logout: () => {

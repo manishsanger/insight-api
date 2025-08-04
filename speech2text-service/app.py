@@ -13,7 +13,7 @@ app = Flask(__name__)
 
 # Configuration
 app.config['API_TOKEN'] = os.getenv('API_TOKEN', 'insight_speech_token_2024')
-app.config['WHISPER_MODEL'] = os.getenv('WHISPER_MODEL', 'turbo')
+app.config['WHISPER_MODEL'] = os.getenv('WHISPER_MODEL', 'base')
 app.config['AUDIO_UPLOAD_FOLDER'] = '/app/audio_files'
 app.config['TEMP_FOLDER'] = '/app/temp'
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size

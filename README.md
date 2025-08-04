@@ -117,7 +117,7 @@ curl -X POST http://localhost:8650/api/parse-message
 
 ### Admin Authentication
 ```bash
-curl -X POST http://localhost:8650/auth/login 
+curl -X POST http://localhost:8650/api/auth/login 
   -H "Content-Type: application/json" 
   -d '{"username": "admin", "password": "Apple@123"}'
 ```

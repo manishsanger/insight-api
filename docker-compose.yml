@@ -24,7 +24,7 @@ services:
     ports:
       - "8650:8650"
     environment:
-      MONGODB_URI: mongodb://admin:Apple@123@mongodb:27017/insight_db?authSource=admin
+      MONGODB_URI: mongodb://admin:Apple%40123@mongodb:27017/insight_db?authSource=admin
       SPEECH2TEXT_API_URL: http://speech2text-service:8652
       SPEECH2TEXT_API_TOKEN: insight_speech_token_2024
       OLLAMA_URL: http://host.docker.internal:11434
@@ -60,7 +60,7 @@ services:
       - "8652:8652"
     environment:
       API_TOKEN: insight_speech_token_2024
-      WHISPER_MODEL: turbo
+      WHISPER_MODEL: base
     networks:
       - insight-network
     volumes:

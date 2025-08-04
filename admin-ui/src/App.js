@@ -1,5 +1,5 @@
 import React from 'react';
-import { Admin, Resource, ListGuesser, EditGuesser, ShowGuesser } from 'react-admin';
+import { Admin, Resource } from 'react-admin';
 import { BrowserRouter } from 'react-router-dom';
 import dataProvider from './dataProvider';
 import authProvider from './authProvider';
@@ -8,14 +8,18 @@ import { ParameterList, ParameterEdit, ParameterCreate } from './components/Para
 import { RequestList } from './components/Requests';
 import { UserList, UserEdit, UserCreate } from './components/Users';
 
+// Use real data provider with Headers fix
+const selectedDataProvider = dataProvider; // Change to mockDataProvider if needed for debugging
+
 const App = () => (
   <BrowserRouter>
     <Admin
-      dataProvider={dataProvider}
+      dataProvider={selectedDataProvider}
       authProvider={authProvider}
       dashboard={Dashboard}
       title="Insight Admin Panel"
     >
+      {/* Testing resources one by one to identify dataProvider errors */}
       <Resource
         name="parameters"
         list={ParameterList}

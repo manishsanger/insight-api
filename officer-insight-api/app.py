@@ -2,7 +2,7 @@ import os
 import bcrypt
 import requests
 from datetime import datetime, timedelta
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, current_app, make_response
 from flask_pymongo import PyMongo
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 from flask_cors import CORS
@@ -12,34 +12,96 @@ import re
 import json
 from bson import ObjectId
 
+# Configure custom JSON encoder
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        if isinstance(o, datetime):
+            return o.isoformat()
+        return super().default(o)
+
+def serialize_mongo_doc(doc):
+    """Recursively serialize MongoDB document to be JSON serializable"""
+    if isinstance(doc, dict):
+        return {key: serialize_mongo_doc(value) for key, value in doc.items()}
+    elif isinstance(doc, list):
+        return [serialize_mongo_doc(item) for item in doc]
+    elif isinstance(doc, ObjectId):
+        return str(doc)
+    elif isinstance(doc, datetime):
+        return doc.isoformat()
+    else:
+        return doc
+
+# Initialize Flask app
 app = Flask(__name__)
+
+# Apply the custom JSON encoder to handle ObjectId and datetime serialization
+app.json_encoder = CustomJSONEncoder
 
 # Configuration
 app.config['JWT_SECRET_KEY'] = 'insight-api-jwt-secret-key-2024'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
-app.config['MONGO_URI'] = os.getenv('MONGODB_URI', 'mongodb://admin:Apple@123@localhost:27017/insight_db?authSource=admin')
-app.config['SPEECH2TEXT_API_URL'] = os.getenv('SPEECH2TEXT_API_URL', 'http://localhost:8652')
+app.config['MONGO_URI'] = os.getenv('MONGODB_URI', 'mongodb://admin:Apple%40123@mongodb:27017/insight_db?authSource=admin')
+app.config['SPEECH2TEXT_API_URL'] = os.getenv('SPEECH2TEXT_API_URL', 'http://speech2text-service:8652')
 app.config['SPEECH2TEXT_API_TOKEN'] = os.getenv('SPEECH2TEXT_API_TOKEN', 'insight_speech_token_2024')
 app.config['OLLAMA_URL'] = os.getenv('OLLAMA_URL', 'http://host.docker.internal:11434')
 
 # Initialize extensions
 mongo = PyMongo(app)
 jwt = JWTManager(app)
-CORS(app)
+CORS(app, origins=['http://localhost:8651', 'http://localhost:3000'], supports_credentials=True)
 
 # API Documentation
 api = Api(app, version='1.0', title='Officer Insight API',
           description='API for processing audio files and text messages',
-          doc='/docs/')
+          doc='/docs/', prefix='/api')
+
+# Override Flask-RESTX JSON output to use our custom JSON serialization
+def custom_output_json(data, code, headers=None):
+    """Custom JSON output that handles MongoDB ObjectId and datetime"""
+    import json
+    
+    print(f"=== Custom JSON output called ===")
+    print(f"Data type: {type(data)}")
+    print(f"Data: {data}")
+    
+    try:
+        # Serialize the data first to handle ObjectId and datetime
+        serialized_data = serialize_mongo_doc(data)
+        
+        # Use our custom encoder for JSON serialization
+        dumped = json.dumps(serialized_data, cls=CustomJSONEncoder, ensure_ascii=False, indent=None, separators=(',', ':')) + '\n'
+        
+        resp = current_app.response_class(dumped, status=code, mimetype='application/json')
+        if headers:
+            resp.headers.extend(headers)
+        return resp
+    except Exception as e:
+        print(f"Error in custom_output_json: {e}")
+        import traceback
+        traceback.print_exc()
+        # Fallback to default JSON handling
+        fallback = json.dumps({'error': 'Serialization error'}) + '\n'
+        return current_app.response_class(fallback, status=500, mimetype='application/json')
+
+# Override the default JSON representation
+print("=== Setting custom JSON representation ===")
+api.representations['application/json'] = custom_output_json
+print(f"Current representations: {api.representations}")
+
+# Configure Flask app to use our custom JSON encoder for responses
+app.json_encoder = CustomJSONEncoder
 
 # Namespaces
 auth_ns = Namespace('auth', description='Authentication operations')
 admin_ns = Namespace('admin', description='Admin operations')
-api_ns = Namespace('api', description='Public API operations')
+public_ns = Namespace('public', description='Public API operations')
 
-api.add_namespace(auth_ns, path='/auth')
+api.add_namespace(auth_ns, path='/')
 api.add_namespace(admin_ns, path='/admin')
-api.add_namespace(api_ns, path='/api')
+api.add_namespace(public_ns, path='/public')
 
 # Models for Swagger documentation
 login_model = api.model('Login', {
@@ -213,15 +275,24 @@ def convert_audio_to_text(audio_file):
         print(f"Audio conversion error: {e}")
         return None
 
-class JSONEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, ObjectId):
-            return str(obj)
-        if isinstance(obj, datetime):
-            return obj.isoformat()
-        return super().default(obj)
-
-app.json_encoder = JSONEncoder
+def serialize_mongo_doc(doc):
+    """Convert MongoDB document to JSON serializable format"""
+    if isinstance(doc, list):
+        return [serialize_mongo_doc(item) for item in doc]
+    elif isinstance(doc, dict):
+        result = {}
+        for key, value in doc.items():
+            if isinstance(value, ObjectId):
+                result[key] = str(value)
+            elif isinstance(value, datetime):
+                result[key] = value.isoformat()
+            elif isinstance(value, (dict, list)):
+                result[key] = serialize_mongo_doc(value)
+            else:
+                result[key] = value
+        return result
+    else:
+        return doc
 
 # Authentication endpoints
 @auth_ns.route('/login')
@@ -238,12 +309,18 @@ class Login(Resource):
         
         user = mongo.db.users.find_one({'username': username})
         
-        if user and bcrypt.checkpw(password.encode('utf-8'), user['password']):
-            access_token = create_access_token(
-                identity=str(user['_id']),
-                additional_claims={'role': user['role'], 'username': username}
-            )
-            return {'access_token': access_token, 'role': user['role']}, 200
+        if user:
+            stored_password = user['password']
+            # Ensure stored password is bytes for bcrypt comparison
+            if isinstance(stored_password, str):
+                stored_password = stored_password.encode('utf-8')
+            
+            if bcrypt.checkpw(password.encode('utf-8'), stored_password):
+                access_token = create_access_token(
+                    identity=str(user['_id']),
+                    additional_claims={'role': user['role'], 'username': username}
+                )
+                return {'access_token': access_token, 'role': user['role']}, 200
         
         return {'message': 'Invalid credentials'}, 401
 
@@ -253,31 +330,61 @@ class ParameterList(Resource):
     @jwt_required()
     def get(self):
         """Get all extraction parameters"""
-        parameters = list(mongo.db.parameters.find())
-        return {'parameters': parameters}, 200
+        try:
+            parameters = list(mongo.db.parameters.find())
+            
+            # Serialize parameters to handle ObjectId and datetime
+            serialized_parameters = []
+            for param in parameters:
+                serialized_param = serialize_mongo_doc(param)
+                # Add 'id' field for React Admin compatibility
+                serialized_param['id'] = serialized_param['_id']
+                serialized_parameters.append(serialized_param)
+            
+            return {'data': serialized_parameters}, 200
+        except Exception as e:
+            print(f"Error in parameters endpoint: {e}")
+            import traceback
+            traceback.print_exc()
+            return {'error': str(e)}, 500
     
     @admin_ns.expect(parameter_model)
     @jwt_required()
     def post(self):
         """Create new extraction parameter"""
-        data = request.get_json()
-        
-        # Check if parameter already exists
-        existing = mongo.db.parameters.find_one({'name': data['name']})
-        if existing:
-            return {'message': 'Parameter already exists'}, 400
-        
-        parameter = {
-            'name': data['name'],
-            'description': data.get('description', ''),
-            'active': data.get('active', True),
-            'created_at': datetime.utcnow()
-        }
-        
-        result = mongo.db.parameters.insert_one(parameter)
-        parameter['_id'] = str(result.inserted_id)
-        
-        return {'parameter': parameter}, 201
+        try:
+            data = request.get_json()
+            
+            # Check if parameter already exists
+            existing = mongo.db.parameters.find_one({'name': data['name']})
+            if existing:
+                return {'message': 'Parameter already exists'}, 400
+            
+            creation_time = datetime.utcnow()
+            parameter = {
+                'name': data['name'],
+                'description': data.get('description', ''),
+                'active': data.get('active', True),
+                'created_at': creation_time
+            }
+            
+            result = mongo.db.parameters.insert_one(parameter)
+            
+            # Return serialized response
+            serialized_parameter = serialize_mongo_doc({
+                '_id': result.inserted_id,
+                'name': parameter['name'],
+                'description': parameter['description'],
+                'active': parameter['active'],
+                'created_at': parameter['created_at']
+            })
+            
+            return {'data': serialized_parameter}, 201
+        except Exception as e:
+            print(f"Error in POST parameters endpoint: {e}")
+            import traceback
+            traceback.print_exc()
+            return {'message': 'Internal server error'}, 500
 
 @admin_ns.route('/parameters/<parameter_id>')
 class ParameterDetail(Resource):
@@ -317,79 +424,126 @@ class RequestList(Resource):
     @jwt_required()
     def get(self):
         """Get all API requests with pagination"""
-        page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('per_page', 10))
-        start_date = request.args.get('start_date')
-        end_date = request.args.get('end_date')
-        
-        query = {}
-        if start_date and end_date:
-            query['created_at'] = {
-                '$gte': datetime.fromisoformat(start_date),
-                '$lte': datetime.fromisoformat(end_date)
+        try:
+            page = int(request.args.get('page', 1))
+            per_page = int(request.args.get('per_page', 10))
+            start_date = request.args.get('start_date')
+            end_date = request.args.get('end_date')
+            
+            query = {}
+            if start_date and end_date:
+                query['created_at'] = {
+                    '$gte': datetime.fromisoformat(start_date),
+                    '$lte': datetime.fromisoformat(end_date)
+                }
+            
+            total = mongo.db.requests.count_documents(query)
+            requests_data = list(mongo.db.requests.find(query)
+                               .sort('created_at', -1)
+                               .skip((page - 1) * per_page)
+                               .limit(per_page))
+            
+            # Serialize requests to avoid ObjectId issues
+            serialized_requests = []
+            for req in requests_data:
+                serialized_req = serialize_mongo_doc(req)
+                # Add 'id' field for React Admin compatibility
+                serialized_req['id'] = serialized_req['_id']
+                serialized_requests.append(serialized_req)
+            
+            result = {
+                'data': serialized_requests,
+                'total': total,
+                'page': page,
+                'per_page': per_page,
+                'pages': (total + per_page - 1) // per_page
             }
-        
-        total = mongo.db.requests.count_documents(query)
-        requests_data = list(mongo.db.requests.find(query)
-                           .sort('created_at', -1)
-                           .skip((page - 1) * per_page)
-                           .limit(per_page))
-        
-        return {
-            'requests': requests_data,
-            'total': total,
-            'page': page,
-            'per_page': per_page,
-            'pages': (total + per_page - 1) // per_page
-        }, 200
+            
+            return result, 200
+        except Exception as e:
+            print(f"Error in requests endpoint: {e}")
+            import traceback
+            traceback.print_exc()
+            return {'error': str(e)}, 500
 
 @admin_ns.route('/users')
 class UserList(Resource):
     @jwt_required()
     def get(self):
         """Get all users"""
-        page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('per_page', 10))
-        
-        total = mongo.db.users.count_documents({})
-        users = list(mongo.db.users.find({}, {'password': 0})  # Exclude password field
-                   .sort('created_at', -1)
-                   .skip((page - 1) * per_page)
-                   .limit(per_page))
-        
-        return {
-            'users': users,
-            'total': total,
-            'page': page,
-            'per_page': per_page,
-            'pages': (total + per_page - 1) // per_page
-        }, 200
+        try:
+            page = int(request.args.get('page', 1))
+            per_page = int(request.args.get('per_page', 10))
+            
+            total = mongo.db.users.count_documents({})
+            users = list(mongo.db.users.find({}, {'password': 0})  # Exclude password field
+                       .sort('created_at', -1)
+                       .skip((page - 1) * per_page)
+                       .limit(per_page))
+            
+            # Serialize users to avoid ObjectId issues
+            serialized_users = []
+            for user in users:
+                serialized_user = serialize_mongo_doc(user)
+                # Add 'id' field for React Admin compatibility
+                serialized_user['id'] = serialized_user['_id']
+                serialized_users.append(serialized_user)
+            
+            result = {
+                'data': serialized_users,
+                'total': total,
+                'page': page,
+                'per_page': per_page,
+                'pages': (total + per_page - 1) // per_page
+            }
+            
+            return result, 200
+        except Exception as e:
+            print(f"Error in users endpoint: {e}")
+            import traceback
+            traceback.print_exc()
+            return {'error': str(e)}, 500
     
     @jwt_required()
     def post(self):
         """Create new user"""
-        data = request.get_json()
-        
-        # Check if user already exists
-        existing = mongo.db.users.find_one({'username': data['username']})
-        if existing:
-            return {'message': 'User already exists'}, 400
-        
-        # Hash password
-        hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
-        
-        user = {
-            'username': data['username'],
-            'password': hashed_password,
-            'role': data.get('role', 'user'),
-            'created_at': datetime.utcnow()
-        }
-        
-        result = mongo.db.users.insert_one(user)
-        user['_id'] = str(result.inserted_id)
-        del user['password']  # Don't return password
-        
-        return {'user': user}, 201
+        try:
+            data = request.get_json()
+            
+            # Check if user already exists
+            existing = mongo.db.users.find_one({'username': data['username']})
+            if existing:
+                return {'message': 'User already exists'}, 400
+            
+            # Hash password
+            hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
+            
+            user = {
+                'username': data['username'],
+                'password': hashed_password,
+                'role': data.get('role', 'user'),
+                'created_at': datetime.utcnow()
+            }
+            
+            result = mongo.db.users.insert_one(user)
+            
+            # Create serialized response (exclude password)
+            user_response = {
+                '_id': result.inserted_id,
+                'username': user['username'],
+                'role': user['role'],
+                'created_at': user['created_at']
+            }
+            
+            serialized_user = serialize_mongo_doc(user_response)
+            serialized_user['id'] = serialized_user['_id']
+            
+            return {'data': serialized_user}, 201
+        except Exception as e:
+            print(f"Error in POST users endpoint: {e}")
+            import traceback
+            traceback.print_exc()
+            return {'message': 'Internal server error'}, 500
 
 @admin_ns.route('/users/<user_id>')
 class UserDetail(Resource):
@@ -456,9 +610,9 @@ class Dashboard(Resource):
         }, 200
 
 # Public API endpoints
-@api_ns.route('/parse-message')
+@public_ns.route('/parse-message')
 class ParseMessage(Resource):
-    @api_ns.expect(message_model)
+    @public_ns.expect(message_model)
     def post(self):
         """Parse text message or audio file and extract information"""
         try:
@@ -528,7 +682,7 @@ class ParseMessage(Resource):
             })
             return {'message': 'Internal server error'}, 500
 
-@api_ns.route('/health')
+@public_ns.route('/health')
 class Health(Resource):
     def get(self):
         """Health check endpoint"""
