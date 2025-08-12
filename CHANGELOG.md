@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2025-08-12 - Vehicle Image Identification
+
+### 🚀 Major Features Added
+- **NEW API Endpoint**: `/api/public/car-identifier` for vehicle image identification
+- **AI Vision Integration**: Uses Ollama LLaVA vision model for image analysis
+- **Vehicle Recognition**: Automatic identification of vehicle make, color, model, and license plate
+- **Image Processing**: Support for multiple image formats (JPG, PNG, GIF, BMP, WebP)
+
+### ✨ Features Added
+- **Vehicle Image Identification API**:
+  - New `/api/public/car-identifier` endpoint
+  - AI-powered license plate recognition
+  - Vehicle make, color, and model identification
+  - Support for multiple image formats
+  - Comprehensive error handling and validation
+
+- **Enhanced AI Capabilities**:
+  - Integration with Ollama LLaVA vision model
+  - Advanced prompt engineering for vehicle identification
+  - Structured data extraction from vehicle images
+  - Base64 image encoding for AI processing
+
+### 🔧 Technical Improvements
+- Added Pillow (PIL) dependency for image processing
+- Enhanced API documentation with image endpoint examples
+- Updated Swagger documentation with new car-identifier model
+- Improved error handling for image processing workflows
+
+### 📚 Documentation Updates
+- Updated README.md with vehicle image identification examples
+- Enhanced API_DOCUMENTATION.md with complete endpoint specification
+- Added supported image formats documentation
+- Updated feature descriptions to include vision capabilities
+
 ## [2.1.0] - 2025-08-12 - Enhanced Vehicle Field Separation
 
 ### ✨ Features Added

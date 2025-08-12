@@ -120,6 +120,10 @@ message_model = api.model('Message', {
     'audio_message': fields.Raw(description='Audio file')
 })
 
+car_image_model = api.model('CarImage', {
+    'image': fields.Raw(required=True, description='Vehicle image file (JPG, PNG, etc.)')
+})
+
 # Default extraction parameters
 DEFAULT_PARAMETERS = [
     {'name': 'person_name', 'description': 'Name of the person involved', 'active': True},
@@ -362,6 +366,70 @@ def process_text_with_ollama_service(text):
     except Exception as e:
         print(f"Text processing error: {e}")
         return None
+
+def process_image_with_ollama(image_file):
+    """Process vehicle image using Ollama vision model for car identification"""
+    try:
+        import base64
+        import io
+        from PIL import Image
+        
+        # Read and process the image
+        image_data = image_file.read()
+        image_file.seek(0)  # Reset file pointer
+        
+        # Convert image to base64 for Ollama vision model
+        image_base64 = base64.b64encode(image_data).decode('utf-8')
+        
+        # Use Ollama vision model (llama3.2-vision:latest or llava)
+        prompt = """
+Analyze this vehicle image and extract the following information in this exact format:
+
+- Vehicle Registration: [license plate number if visible]
+- Vehicle Make: [car manufacturer/brand, e.g., BMW, Toyota, Ford]
+- Vehicle Color: [primary vehicle color, e.g., Blue, Red, Black]
+- Vehicle Model: [car model/series, e.g., 320i, Camry, Focus]
+
+Only include fields that you can clearly identify from the image. If information is not visible or unclear, omit that field.
+Focus on identifying the vehicle make, color, and model even if the license plate is not clearly visible.
+"""
+
+        response = requests.post(
+            f"{app.config['OLLAMA_URL']}/api/generate",
+            json={
+                "model": "llava",  # Use LLaVA vision model
+                "prompt": prompt,
+                "images": [image_base64],
+                "stream": False
+            },
+            timeout=120  # Longer timeout for image processing
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            processed_text = result.get('response', '').strip()
+            
+            # Parse the structured response into a dictionary
+            extracted_data = {}
+            lines = processed_text.split('\n')
+            
+            for line in lines:
+                line = line.strip()
+                if ':' in line and line.startswith('- '):
+                    key, value = line[2:].split(':', 1)
+                    key = key.strip()
+                    value = value.strip()
+                    if value and value.lower() not in ['[not visible]', '[not clear]', '[unknown]', 'n/a', 'none']:
+                        extracted_data[key.lower().replace(' ', '_')] = value
+            
+            return processed_text, extracted_data
+        else:
+            print(f"Ollama vision API error: {response.status_code}")
+            return None, None
+            
+    except Exception as e:
+        print(f"Image processing error: {e}")
+        return None, None
 
 def serialize_mongo_doc(doc):
     """Convert MongoDB document to JSON serializable format"""
@@ -816,6 +884,76 @@ class ParseMessage(Resource):
                 formatted_lines.append(f"{formatted_key}: {value}")
         
         return '\n'.join(formatted_lines)
+
+@public_ns.route('/car-identifier')
+class CarIdentifier(Resource):
+    @public_ns.expect(car_image_model)
+    def post(self):
+        """Identify vehicle information from image using AI vision model"""
+        try:
+            # Check if image file is provided
+            if 'image' not in request.files:
+                return {'message': 'Image file is required'}, 400
+            
+            image_file = request.files['image']
+            if image_file.filename == '':
+                return {'message': 'No image file selected'}, 400
+            
+            # Validate file type
+            allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'}
+            file_extension = image_file.filename.rsplit('.', 1)[1].lower() if '.' in image_file.filename else ''
+            
+            if file_extension not in allowed_extensions:
+                return {'message': f'Invalid file type. Supported formats: {", ".join(allowed_extensions)}'}, 400
+            
+            # Process image with Ollama vision model
+            processed_output, extracted_info = process_image_with_ollama(image_file)
+            
+            if not processed_output:
+                # Log the request
+                mongo.db.requests.insert_one({
+                    'endpoint': '/api/public/car-identifier',
+                    'status': 'error',
+                    'error': 'Failed to process image with AI vision model',
+                    'created_at': datetime.utcnow()
+                })
+                return {'message': 'Failed to process image with AI vision model'}, 500
+            
+            # Save to database
+            result_doc = {
+                'image_filename': image_file.filename,
+                'processed_output': processed_output,
+                'extracted_info': extracted_info,
+                'endpoint': 'car-identifier',
+                'created_at': datetime.utcnow()
+            }
+            
+            result = mongo.db.extractions.insert_one(result_doc)
+            
+            # Log the request
+            mongo.db.requests.insert_one({
+                'endpoint': '/api/public/car-identifier',
+                'status': 'success',
+                'extraction_id': str(result.inserted_id),
+                'created_at': datetime.utcnow()
+            })
+            
+            return {
+                'id': str(result.inserted_id),
+                'filename': image_file.filename,
+                'processed_output': processed_output,
+                'extracted_info': extracted_info
+            }, 200
+            
+        except Exception as e:
+            # Log the error
+            mongo.db.requests.insert_one({
+                'endpoint': '/api/public/car-identifier',
+                'status': 'error',
+                'error': str(e),
+                'created_at': datetime.utcnow()
+            })
+            return {'message': 'Internal server error'}, 500
 
 @public_ns.route('/health')
 class Health(Resource):

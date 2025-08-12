@@ -103,6 +103,46 @@ curl -X POST http://localhost:8650/api/public/parse-message \
 }
 ```
 
+#### Vehicle Image Identification
+**Endpoint:** `POST /public/car-identifier`
+
+**Description:** Identify vehicle information from images using AI vision models. Supports license plate recognition, make, color, and model identification.
+
+**Content-Type:** `multipart/form-data`
+
+**Parameters:**
+- `image` (file, required): Vehicle image file (JPG, PNG, GIF, BMP, WebP)
+
+**Example:**
+```bash
+curl -X POST http://localhost:8650/api/public/car-identifier \
+  -F "image=@vehicle_photo.jpg"
+```
+
+**Response:**
+```json
+{
+  "id": "extraction_id",
+  "filename": "vehicle_photo.jpg",
+  "processed_output": "Vehicle Registration: AB67XYZ\nVehicle Make: BMW\nVehicle Color: Blue\nVehicle Model: 320i",
+  "extracted_info": {
+    "vehicle_registration": "AB67XYZ",
+    "vehicle_make": "BMW",
+    "vehicle_color": "Blue",
+    "vehicle_model": "320i"
+  }
+}
+```
+
+**Supported Image Formats:**
+- JPG/JPEG
+- PNG  
+- GIF
+- BMP
+- WebP
+
+**AI Model:** Uses Ollama LLaVA vision model for accurate vehicle identification.
+
 #### Health Check
 **Endpoint:** `GET /public/health`
 

@@ -16,6 +16,7 @@ The application consists of three microservices:
 - Docker and Docker Compose
 - 4GB+ available RAM
 - 10GB+ available disk space
+- **Ollama with LLaVA vision model** (for vehicle image identification)
 
 ### Start All Services
 ```bash
@@ -24,6 +25,15 @@ The application consists of three microservices:
 
 # Start normally (preserve existing data)
 ./scripts/start.sh
+```
+
+### Setup LLaVA Vision Model (Required for Image Identification)
+```bash
+# Pull the LLaVA vision model in Ollama
+ollama pull llava
+
+# Verify the model is available
+ollama list
 ```
 
 ### Access the Services
@@ -45,6 +55,7 @@ The application consists of three microservices:
 **Key Features:**
 - Audio file processing through Speech2Text integration
 - Text message parsing and information extraction
+- **Vehicle image identification using AI vision models**
 - AI-powered extraction using Ollama with enhanced prompt engineering
 - JWT-based authentication for admin operations
 - Configurable extraction parameters
@@ -135,6 +146,24 @@ curl -X POST http://localhost:8650/api/public/parse-message \
   -F "audio_message=@recording.wav"
 ```
 
+### Identify Vehicle from Image
+```bash
+curl -X POST http://localhost:8650/api/public/car-identifier \
+  -F "image=@vehicle_photo.jpg"
+```
+
+**Example Response:**
+```json
+{
+  "extracted_info": {
+    "vehicle_registration": "AB67XYZ",
+    "vehicle_make": "BMW",
+    "vehicle_color": "Blue",
+    "vehicle_model": "320i"
+  }
+}
+```
+
 ### Admin Authentication
 ```bash
 curl -X POST http://localhost:8650/api/auth/login \
@@ -173,9 +202,11 @@ When started with the `clean` flag, the system loads sample extraction data incl
 - Python 3.11 with Flask
 - MongoDB for data storage
 - Ollama AI for text processing and structured data extraction
+- **Ollama LLaVA for vehicle image identification**
 - FFmpeg for audio preprocessing
 - JWT for authentication
 - Docker for containerization
+- **Pillow (PIL) for image processing**
 
 **Frontend:**
 - React 18 with React Admin
