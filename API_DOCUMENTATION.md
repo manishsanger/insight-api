@@ -141,7 +141,7 @@ curl -X POST http://localhost:8650/api/public/car-identifier \
 - BMP
 - WebP
 
-**AI Model:** Uses Ollama LLaVA vision model for accurate vehicle identification.
+**AI Model:** Uses Ollama LLaVA 13B v1.5 FP16 vision model for accurate vehicle identification.
 
 #### Health Check
 **Endpoint:** `GET /public/health`

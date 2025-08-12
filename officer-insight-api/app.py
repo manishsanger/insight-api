@@ -397,12 +397,12 @@ Focus on identifying the vehicle make, color, and model even if the license plat
         response = requests.post(
             f"{app.config['OLLAMA_URL']}/api/generate",
             json={
-                "model": "llava",  # Use LLaVA vision model
+                "model": "llava:13b-v1.5-fp16",  # Use LLaVA 13B vision model with FP16 precision
                 "prompt": prompt,
                 "images": [image_base64],
                 "stream": False
             },
-            timeout=120  # Longer timeout for image processing
+            timeout=180  # Longer timeout for larger model processing
         )
         
         if response.status_code == 200:

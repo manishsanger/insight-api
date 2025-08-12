@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.1] - 2025-08-12 - Enhanced Vision Model
+
+### 🔧 Technical Improvements
+- **Upgraded Vision Model**: Updated from `llava` to `llava:13b-v1.5-fp16` for better accuracy
+- **Enhanced Processing**: Improved vehicle identification with larger 13B parameter model
+- **FP16 Precision**: Better memory efficiency while maintaining high accuracy
+- **Extended Timeout**: Increased processing timeout to 180 seconds for larger model
+
+### 📚 Documentation Updates
+- Updated setup instructions for LLaVA 13B model installation
+- Enhanced README.md with new model requirements
+- Updated API documentation with improved model specifications
+
 ## [2.2.0] - 2025-08-12 - Vehicle Image Identification
 
 ### 🚀 Major Features Added

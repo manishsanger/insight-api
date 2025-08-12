@@ -16,7 +16,7 @@ The application consists of three microservices:
 - Docker and Docker Compose
 - 4GB+ available RAM
 - 10GB+ available disk space
-- **Ollama with LLaVA vision model** (for vehicle image identification)
+- **Ollama with LLaVA 13B vision model** (for vehicle image identification)
 
 ### Start All Services
 ```bash
@@ -29,8 +29,8 @@ The application consists of three microservices:
 
 ### Setup LLaVA Vision Model (Required for Image Identification)
 ```bash
-# Pull the LLaVA vision model in Ollama
-ollama pull llava
+# Pull the LLaVA 13B vision model with FP16 precision in Ollama
+ollama pull llava:13b-v1.5-fp16
 
 # Verify the model is available
 ollama list
@@ -202,7 +202,7 @@ When started with the `clean` flag, the system loads sample extraction data incl
 - Python 3.11 with Flask
 - MongoDB for data storage
 - Ollama AI for text processing and structured data extraction
-- **Ollama LLaVA for vehicle image identification**
+- **Ollama LLaVA 13B** for vehicle image identification
 - FFmpeg for audio preprocessing
 - JWT for authentication
 - Docker for containerization
