@@ -415,22 +415,71 @@ Focus on identifying the vehicle make, color, and model even if the license plat
             
             for line in lines:
                 line = line.strip()
+                
                 # Handle lines with colons (with or without bullet points)
                 if ':' in line:
-                    # Remove the bullet point prefix if present
-                    if line.startswith(('- ', '* ')):
+                    content = line
+                    
+                    # Remove various bullet point prefixes if present
+                    if line.startswith('- '):
                         content = line[2:]
-                    else:
-                        content = line
+                    elif line.startswith('* '):
+                        content = line[2:]
+                    elif line.startswith('-'):
+                        content = line[1:].strip()
+                    elif line.startswith('*'):
+                        content = line[1:].strip()
                     
                     try:
-                        key, value = content.split(':', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        if value and value.lower() not in ['[not visible]', '[not clear]', '[unknown]', 'n/a', 'none']:
-                            extracted_data[key.lower().replace(' ', '_')] = value
-                    except ValueError:
-                        # Skip lines that can't be split properly
+                        parts = content.split(':', 1)
+                        if len(parts) == 2:
+                            key, value = parts
+                            key = key.strip()
+                            value = value.strip()
+                            
+                            # Clean up value - handle brackets intelligently
+                            if '[' in value and ']' in value:
+                                bracket_start = value.find('[')
+                                bracket_end = value.find(']')
+                                
+                                if bracket_start == 0:
+                                    # Value starts with bracket, extract content from within
+                                    bracket_content = value[1:bracket_end].strip()
+                                    
+                                    # Check if bracket content is meaningful data (not description)
+                                    if (bracket_content and 
+                                        len(bracket_content) > 2 and
+                                        not any(desc in bracket_content.lower() for desc in [
+                                            'license plate', 'plate number', 'number in', 'visible', 
+                                            'not clear', 'unknown', 'green', 'blue', 'color'
+                                        ])):
+                                        value = bracket_content
+                                    else:
+                                        # Check for content after bracket
+                                        after_bracket = value[bracket_end + 1:].strip()
+                                        if after_bracket:
+                                            value = after_bracket
+                                        else:
+                                            # If bracket contains description, skip this value
+                                            continue
+                                else:
+                                    # Content before bracket, use that
+                                    value = value[:bracket_start].strip()
+                            
+                            # Validate the value is meaningful
+                            if (value and 
+                                len(value) > 0 and 
+                                value.lower() not in ['[not visible]', '[not clear]', '[unknown]', 'n/a', 'none', '', 'unknown'] and
+                                not any(desc in value.lower() for desc in [
+                                    'license plate number', 'plate number', 'number in green', 
+                                    'number in blue', 'visible in', 'not visible', 'not clear'
+                                ])):
+                                
+                                field_name = key.lower().replace(' ', '_')
+                                extracted_data[field_name] = value
+                    
+                    except Exception:
+                        # Skip lines that can't be processed
                         continue
             
             return processed_text, extracted_data
