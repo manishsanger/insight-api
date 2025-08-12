@@ -415,12 +415,23 @@ Focus on identifying the vehicle make, color, and model even if the license plat
             
             for line in lines:
                 line = line.strip()
-                if ':' in line and line.startswith('- '):
-                    key, value = line[2:].split(':', 1)
-                    key = key.strip()
-                    value = value.strip()
-                    if value and value.lower() not in ['[not visible]', '[not clear]', '[unknown]', 'n/a', 'none']:
-                        extracted_data[key.lower().replace(' ', '_')] = value
+                # Handle lines with colons (with or without bullet points)
+                if ':' in line:
+                    # Remove the bullet point prefix if present
+                    if line.startswith(('- ', '* ')):
+                        content = line[2:]
+                    else:
+                        content = line
+                    
+                    try:
+                        key, value = content.split(':', 1)
+                        key = key.strip()
+                        value = value.strip()
+                        if value and value.lower() not in ['[not visible]', '[not clear]', '[unknown]', 'n/a', 'none']:
+                            extracted_data[key.lower().replace(' ', '_')] = value
+                    except ValueError:
+                        # Skip lines that can't be split properly
+                        continue
             
             return processed_text, extracted_data
         else:
