@@ -1,0 +1,702 @@
+{
+  "info": {
+    "name": "Insight API - Complete Test Suite",
+    "description": "Comprehensive API testing collection for Insight API system including authentication, text processing, audio processing, and vehicle image identification",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8650/api",
+      "type": "string"
+    },
+    {
+      "key": "speech_url",
+      "value": "http://localhost:8652/api",
+      "type": "string"
+    },
+    {
+      "key": "speech_token",
+      "value": "insight_speech_token_2024",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "noauth"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Set up common variables",
+          "pm.globals.set(\"timestamp\", new Date().toISOString());",
+          "",
+          "// Log the request",
+          "console.log(`🚀 Running: ${pm.info.requestName}`);",
+          "console.log(`📍 URL: ${pm.request.url}`);"
+        ],
+        "type": "text/javascript"
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "exec": [
+          "// Common assertions for most requests (skip for file uploads)",
+          "if (!pm.request.url.toString().includes('parse-message') && ",
+          "    !pm.request.url.toString().includes('car-identifier') && ",
+          "    !pm.request.url.toString().includes('convert')) {",
+          "    pm.test(\"Response time is reasonable\", function () {",
+          "        pm.expect(pm.response.responseTime).to.be.below(10000); // 10 seconds",
+          "    });",
+          "}",
+          "",
+          "// Log response for debugging",
+          "console.log(`✅ Response Status: ${pm.response.status}`);",
+          "console.log(`⏱️ Response Time: ${pm.response.responseTime}ms`);"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('access_token');",
+                  "    ",
+                  "    // Store JWT token for future requests",
+                  "    pm.environment.set(\"jwt_token\", responseJson.access_token);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains role\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('role');",
+                  "    pm.expect(responseJson.role).to.eql('admin');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Apple@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🌍 Public APIs",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Health check successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('status');",
+                  "    pm.expect(responseJson.status).to.eql('healthy');",
+                  "});",
+                  "",
+                  "pm.test(\"Services status included\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('services');",
+                  "    pm.expect(responseJson.services).to.have.property('database');",
+                  "    pm.expect(responseJson.services).to.have.property('speech2text');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/public/health",
+              "host": ["{{base_url}}"],
+              "path": ["public", "health"]
+            }
+          }
+        },
+        {
+          "name": "Parse Text Message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Text parsing successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('extracted_info');",
+                  "    pm.expect(responseJson).to.have.property('text');",
+                  "    pm.expect(responseJson).to.have.property('id');",
+                  "});",
+                  "",
+                  "pm.test(\"Vehicle information extracted\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    const extracted = responseJson.extracted_info;",
+                  "    const hasVehicleInfo = ",
+                  "        extracted.hasOwnProperty('vehicle_make') ||",
+                  "        extracted.hasOwnProperty('vehicle_color') ||",
+                  "        extracted.hasOwnProperty('vehicle_model');",
+                  "    pm.expect(hasVehicleInfo).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test(\"Response time acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(30000); // 30 seconds",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "message",
+                  "value": "Add Traffic Offence Report. Driver name is James Smith, male, DOB 12/02/2000. Vehicle Registration OU18ZFB a blue BMW 420. Offence is No Seat Belt at Oxford Road, Cheltenham.",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/public/parse-message",
+              "host": ["{{base_url}}"],
+              "path": ["public", "parse-message"]
+            }
+          }
+        },
+        {
+          "name": "Parse Audio File",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Audio parsing successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('text');",
+                  "    pm.expect(responseJson).to.have.property('extracted_info');",
+                  "    pm.expect(responseJson).to.have.property('processed_output');",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(120000); // 2 minutes",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio_message",
+                  "type": "file",
+                  "src": "[]",
+                  "description": "Select an audio file (WAV, MP3, MP4, FLAC)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/public/parse-message",
+              "host": ["{{base_url}}"],
+              "path": ["public", "parse-message"]
+            }
+          }
+        },
+        {
+          "name": "Vehicle Image Identification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Image processing successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('extracted_info');",
+                  "    pm.expect(responseJson).to.have.property('filename');",
+                  "    pm.expect(responseJson).to.have.property('processed_output');",
+                  "});",
+                  "",
+                  "pm.test(\"Vehicle details extracted\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    const extracted = responseJson.extracted_info;",
+                  "    ",
+                  "    // At least one vehicle detail should be extracted",
+                  "    const hasVehicleInfo = ",
+                  "        extracted.hasOwnProperty('vehicle_make') ||",
+                  "        extracted.hasOwnProperty('vehicle_color') ||",
+                  "        extracted.hasOwnProperty('vehicle_model') ||",
+                  "        extracted.hasOwnProperty('vehicle_registration');",
+                  "    ",
+                  "    pm.expect(hasVehicleInfo).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test(\"Processing time acceptable for vision model\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(180000); // 3 minutes for LLaVA 13B",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "[]",
+                  "description": "Select a vehicle image (JPG, PNG, GIF, BMP, WebP)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/public/car-identifier",
+              "host": ["{{base_url}}"],
+              "path": ["public", "car-identifier"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔒 Admin APIs (JWT Required)",
+      "item": [
+        {
+          "name": "Dashboard Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Dashboard access successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('total_requests');",
+                  "    pm.expect(responseJson).to.have.property('successful_requests');",
+                  "    pm.expect(responseJson).to.have.property('success_rate');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "List Parameters",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Parameters list retrieved\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('data');",
+                  "    pm.expect(responseJson.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/parameters",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "parameters"]
+            }
+          }
+        },
+        {
+          "name": "Create Parameter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Parameter created successfully\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('data');",
+                  "    pm.expect(responseJson.data.name).to.eql('test_parameter');",
+                  "    ",
+                  "    // Store parameter ID for cleanup",
+                  "    pm.environment.set(\"test_parameter_id\", responseJson.data._id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"test_parameter\",\n  \"description\": \"Test parameter for API testing\",\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/parameters",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "parameters"]
+            }
+          }
+        },
+        {
+          "name": "List Requests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Requests list retrieved\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('data');",
+                  "    pm.expect(responseJson).to.have.property('total');",
+                  "    pm.expect(responseJson).to.have.property('page');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/requests?page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "requests"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Users list retrieved\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('data');",
+                  "    pm.expect(responseJson.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/users",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎤 Speech2Text Service",
+      "item": [
+        {
+          "name": "Speech2Text Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Speech2Text service healthy\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('status');",
+                  "    pm.expect(responseJson.status).to.eql('healthy');",
+                  "});",
+                  "",
+                  "pm.test(\"Ollama status included\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('ollama');",
+                  "    pm.expect(responseJson.ollama).to.have.property('status');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{speech_url}}/health",
+              "host": ["{{speech_url}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Direct Audio Conversion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Audio conversion successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('text');",
+                  "    pm.expect(responseJson).to.have.property('processed_output');",
+                  "});",
+                  "",
+                  "pm.test(\"Response time acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(120000); // 2 minutes",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{speech_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio_file",
+                  "type": "file",
+                  "src": "[]",
+                  "description": "Select an audio file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{speech_url}}/convert",
+              "host": ["{{speech_url}}"],
+              "path": ["convert"]
+            }
+          }
+        },
+        {
+          "name": "Direct Text Processing",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Text processing successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('text');",
+                  "    pm.expect(responseJson).to.have.property('processed_output');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{speech_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Officer Smith observed a white BMW speeding at 70 mph in a 55 mph zone on Highway 101\"\n}"
+            },
+            "url": {
+              "raw": "{{speech_url}}/process-text",
+              "host": ["{{speech_url}}"],
+              "path": ["process-text"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚨 Error Testing",
+      "item": [
+        {
+          "name": "Invalid Authentication",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Invalid token rejected\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid_token"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "Missing Required Field",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Missing image file error\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            },
+            "url": {
+              "raw": "{{base_url}}/public/car-identifier",
+              "host": ["{{base_url}}"],
+              "path": ["public", "car-identifier"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

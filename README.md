@@ -252,12 +252,21 @@ Key environment variables:
 Each service includes comprehensive documentation:
 - `README.md` - Main project documentation and quick start guide
 - `API_DOCUMENTATION.md` - Complete API reference with examples
+- `POSTMAN_TESTING_GUIDE.md` - Comprehensive Postman testing instructions
 - `CHANGELOG.md` - Version history and migration notes
 - `officer-insight-api/README.md` - API service documentation
 - `speech2text-service/README.md` - Speech service documentation  
 - `admin-ui/README.md` - Admin interface documentation
 - `DEPLOYMENT.md` - Detailed deployment instructions
 - Interactive API docs available at `/docs/` endpoints
+
+### 🧪 API Testing with Postman
+
+For comprehensive API testing using Postman:
+1. **See detailed guide**: `POSTMAN_TESTING_GUIDE.md`
+2. **Import collection**: `postman/Insight-API-Test-Collection.json`
+3. **Import environment**: `postman/Insight-API-Local-Environment.json`
+4. **Run complete test suite** with automated validation
 
 ## 🚨 Troubleshooting
 

@@ -1,0 +1,55 @@
+{
+  "id": "insight-api-local-environment",
+  "name": "Insight API - Local Environment",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8650/api",
+      "description": "Base URL for Officer Insight API",
+      "enabled": true
+    },
+    {
+      "key": "speech_url",
+      "value": "http://localhost:8652/api",
+      "description": "Base URL for Speech2Text Service",
+      "enabled": true
+    },
+    {
+      "key": "admin_ui_url",
+      "value": "http://localhost:8651",
+      "description": "Base URL for Admin UI",
+      "enabled": true
+    },
+    {
+      "key": "speech_token",
+      "value": "insight_speech_token_2024",
+      "description": "Bearer token for Speech2Text service authentication",
+      "enabled": true
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "description": "JWT token obtained from login (automatically set by login request)",
+      "enabled": true
+    },
+    {
+      "key": "admin_username",
+      "value": "admin",
+      "description": "Default admin username",
+      "enabled": true
+    },
+    {
+      "key": "admin_password",
+      "value": "Apple@123",
+      "description": "Default admin password",
+      "enabled": true
+    },
+    {
+      "key": "test_parameter_id",
+      "value": "",
+      "description": "ID of test parameter created during testing (automatically set)",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

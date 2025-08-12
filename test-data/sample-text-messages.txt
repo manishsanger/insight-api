@@ -1,0 +1,24 @@
+# Sample Text Messages for API Testing
+
+## Traffic Violations
+1. "Officer Johnson stopped red Honda Civic plate ABC123 for speeding 65 in 45 zone on Main Street at 2:30 PM"
+
+2. "Add Traffic Offence Report. Driver name is James Smith, male, DOB 12/02/2000. Vehicle Registration OU18ZFB a blue BMW 420. Offence is No Seat Belt at Oxford Road, Cheltenham."
+
+3. "Traffic incident involving blue BMW X5 registration XYZ789, driver Sarah Wilson, hit and run at Park Avenue"
+
+4. "Parking violation white Toyota Camry plate DEF456 parked in handicap space without permit at Downtown Mall"
+
+5. "Officer Martinez observed black Mercedes E-Class license WER234 running red light at 5th Avenue intersection"
+
+## Vehicle Incidents
+6. "Silver Nissan Altima registration QWE567 involved in rear-end collision, driver Michael Brown, no injuries reported"
+
+7. "Green Ford F-150 truck plate RTY890 illegally parked in fire lane at Shopping Center Plaza"
+
+8. "Yellow school bus number 45 speeding in residential zone, driver reported by multiple witnesses"
+
+## Complex Reports
+9. "Multiple vehicle accident: Red Toyota Corolla ABC123, Blue Honda Accord DEF456, and White Ford Explorer GHI789 collision at Highway 101 and Oak Street. Driver of Toyota identified as Jennifer Davis, DOB 08/15/1992. No serious injuries. Traffic backup for 2 hours."
+
+10. "DUI checkpoint stop: Black Audi A4 license UIO123 driver Robert Johnson failed sobriety test. Vehicle impounded. Driver arrested and taken to county jail."
