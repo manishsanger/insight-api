@@ -1,5 +1,5 @@
 Flask==2.3.3
-Flask-CORS==4.0.0
+Flask-CORS==6.0.0
 flask-restx==1.2.0
 requests==2.31.0
 python-multipart==0.0.6
