@@ -87,7 +87,7 @@ curl -X POST http://localhost:8650/api/public/parse-message \
 {
   "id": "extraction_id",
   "text": "Officer observed a red Honda Civic...",
-  "processed_output": "Offence Category: Speeding\nDriver Name: John Smith\nDate Of Birth: 15/03/1985\nLocation Of Offence: Main Street\nOffence Occurred At: 3:30 PM, October 15th, 2023\nOffence: Speeding at 65 mph in a 45 mph zone\nVehicle Registration: ABC-123\nVehicle Manufacturer: Honda\nVehicle Model: Civic (Red)",
+  "processed_output": "Offence Category: Speeding\nDriver Name: John Smith\nDate Of Birth: 15/03/1985\nLocation Of Offence: Main Street\nOffence Occurred At: 3:30 PM, October 15th, 2023\nOffence: Speeding at 65 mph in a 45 mph zone\nVehicle Registration: ABC-123\nVehicle Make: Honda\nVehicle Color: Red\nVehicle Model: Civic",
   "extracted_info": {
     "offence_category": "Speeding",
     "driver_name": "John Smith",
@@ -96,8 +96,9 @@ curl -X POST http://localhost:8650/api/public/parse-message \
     "offence_occurred_at": "3:30 PM, October 15th, 2023",
     "offence": "Speeding at 65 mph in a 45 mph zone",
     "vehicle_registration": "ABC-123",
-    "vehicle_manufacturer": "Honda",
-    "vehicle_model": "Civic (Red)"
+    "vehicle_make": "Honda",
+    "vehicle_color": "Red",
+    "vehicle_model": "Civic"
   }
 }
 ```
@@ -211,7 +212,7 @@ curl -X POST http://localhost:8652/api/convert \
 ```json
 {
   "text": "Officer Johnson stopped a blue Toyota Camry license plate XYZ789 for speeding",
-  "processed_output": "Offence Category: Speeding\nVehicle Manufacturer: Toyota\nVehicle Model: Camry (Blue)\nVehicle Registration: XYZ789",
+  "processed_output": "Offence Category: Speeding\nVehicle Make: Toyota\nVehicle Color: Blue\nVehicle Model: Camry\nVehicle Registration: XYZ789",
   "file_id": "uuid-generated-id",
   "timestamp": "2025-08-12T10:30:00Z"
 }
@@ -243,7 +244,7 @@ curl -X POST http://localhost:8652/api/process-text \
 ```json
 {
   "text": "Officer Smith observed a white BMW speeding at 70 mph in a 55 mph zone",
-  "processed_output": "Offence Category: Speeding\nVehicle Manufacturer: BMW\nVehicle Model: BMW (White)\nOffence: Speeding at 70 mph in a 55 mph zone",
+  "processed_output": "Offence Category: Speeding\nVehicle Make: BMW\nVehicle Color: White\nVehicle Model: BMW\nOffence: Speeding at 70 mph in a 55 mph zone",
   "file_id": null,
   "timestamp": "2025-08-12T10:30:00Z"
 }
@@ -288,8 +289,9 @@ The Ollama AI model is optimized to extract the following information from traff
 - **Offence Occurred At**: Date and time of the offense
 - **Offence**: Specific description of the violation
 - **Vehicle Registration**: License plate number
-- **Vehicle Manufacturer**: Car manufacturer/brand
-- **Vehicle Model**: Car model and color
+- **Vehicle Make**: Car manufacturer/brand only (e.g., BMW, Toyota, Ford)
+- **Vehicle Color**: Vehicle color only (e.g., Blue, Red, Black)
+- **Vehicle Model**: Vehicle model/series only (e.g., 420, Camry, Focus)
 
 ### Enhanced Prompt Engineering
 
@@ -312,8 +314,14 @@ Please extract and format the information as follows:
 - Offence Occurred at: [time and date]
 - Offence: [specific offence description]
 - Vehicle Registration: [registration number]
-- Vehicle Manufacturer: [car manufacturer]
-- Vehicle Model: [car model and color]
+- Vehicle Make: [car manufacturer/brand only, e.g., BMW, Toyota, Ford]
+- Vehicle Color: [vehicle color only, e.g., Blue, Red, Black]
+- Vehicle Model: [vehicle model/series only, e.g., 420, Camry, Focus]
+
+IMPORTANT: For vehicle information, extract Vehicle Make, Vehicle Color, and Vehicle Model as separate fields.
+- Vehicle Make should only contain the manufacturer/brand name
+- Vehicle Color should only contain the color
+- Vehicle Model should only contain the model/series number or name
 
 Only include fields that are mentioned in the text. If information is not available, omit that field.
 Format the response exactly as shown above with each field on a new line.

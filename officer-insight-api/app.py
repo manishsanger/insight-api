@@ -124,8 +124,9 @@ message_model = api.model('Message', {
 DEFAULT_PARAMETERS = [
     {'name': 'person_name', 'description': 'Name of the person involved', 'active': True},
     {'name': 'vehicle_number', 'description': 'Vehicle license plate number', 'active': True},
-    {'name': 'car_color', 'description': 'Color of the vehicle', 'active': True},
-    {'name': 'car_model', 'description': 'Model of the vehicle', 'active': True},
+    {'name': 'vehicle_make', 'description': 'Vehicle manufacturer/brand', 'active': True},
+    {'name': 'vehicle_color', 'description': 'Color of the vehicle', 'active': True},
+    {'name': 'vehicle_model', 'description': 'Model of the vehicle', 'active': True},
     {'name': 'location', 'description': 'Location where incident occurred', 'active': True},
     {'name': 'event_crime_violation', 'description': 'Type of event, crime or violation', 'active': True}
 ]
@@ -177,8 +178,14 @@ Please extract and format the information as follows (only include fields that a
 - Offence Occurred at: [time and date]
 - Offence: [specific offence description]
 - Vehicle Registration: [registration number]
-- Vehicle Manufacturer: [car manufacturer]
-- Vehicle Model: [car model and color]
+- Vehicle Make: [car manufacturer/brand only, e.g., BMW, Toyota, Ford]
+- Vehicle Color: [vehicle color only, e.g., Blue, Red, Black]
+- Vehicle Model: [vehicle model/series only, e.g., 420, Camry, Focus]
+
+IMPORTANT: For vehicle information, extract Vehicle Make, Vehicle Color, and Vehicle Model as separate fields.
+- Vehicle Make should only contain the manufacturer/brand name
+- Vehicle Color should only contain the color
+- Vehicle Model should only contain the model/series number or name
 
 Available parameters to extract: {', '.join(param_names)}
 
@@ -247,19 +254,41 @@ def extract_information_with_regex(text, parameters):
             match = re.search(plate_pattern, text.upper())
             value = match.group(0) if match else None
             
-        elif param_name == 'car_color':
+        elif param_name == 'vehicle_color':
             colors = ['red', 'blue', 'green', 'black', 'white', 'silver', 'gray', 'yellow', 'orange']
             for color in colors:
                 if color in text_lower:
-                    value = color
+                    value = color.title()
                     break
                     
-        elif param_name == 'car_model':
-            models = ['toyota', 'honda', 'ford', 'bmw', 'mercedes', 'audi', 'nissan', 'hyundai']
-            for model in models:
-                if model in text_lower:
-                    value = model
+        elif param_name == 'vehicle_make':
+            makes = ['toyota', 'honda', 'ford', 'bmw', 'mercedes', 'audi', 'nissan', 'hyundai', 'volkswagen', 'subaru']
+            for make in makes:
+                if make in text_lower:
+                    value = make.upper() if make == 'bmw' else make.title()
                     break
+                    
+        elif param_name == 'vehicle_model':
+            # Extract model numbers/names after make
+            model_pattern = r'\b(bmw|toyota|honda|ford|mercedes|audi|nissan|hyundai)\s+([a-z0-9]+)\b'
+            match = re.search(model_pattern, text_lower)
+            if match:
+                value = match.group(2).upper() if match.group(2).isdigit() else match.group(2).title()
+                    
+        elif param_name in ['car_color', 'car_model']:  # Legacy parameter names
+            # Handle legacy parameter names for backward compatibility
+            if param_name == 'car_color':
+                colors = ['red', 'blue', 'green', 'black', 'white', 'silver', 'gray', 'yellow', 'orange']
+                for color in colors:
+                    if color in text_lower:
+                        value = color.title()
+                        break
+            elif param_name == 'car_model':
+                makes = ['toyota', 'honda', 'ford', 'bmw', 'mercedes', 'audi', 'nissan', 'hyundai']
+                for make in makes:
+                    if make in text_lower:
+                        value = make.title()
+                        break
                     
         elif param_name == 'location':
             # Simple location extraction

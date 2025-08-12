@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2025-08-12 - Enhanced Vehicle Field Separation
+
+### ✨ Features Added
+- **Enhanced Vehicle Information Extraction**: Vehicle data now separated into distinct fields
+  - **Vehicle Make**: Car manufacturer/brand only (e.g., BMW, Toyota, Ford)
+  - **Vehicle Color**: Vehicle color only (e.g., Blue, Red, Black)
+  - **Vehicle Model**: Vehicle model/series only (e.g., 420, Camry, Focus)
+- **Improved Prompt Engineering**: Updated Ollama prompts for better field separation
+- **Updated Default Parameters**: Modified extraction parameters to use new vehicle fields
+- **Backward Compatibility**: Legacy parameter names still supported for existing integrations
+
+### 🔧 Technical Improvements
+- Enhanced Ollama prompt templates for more precise vehicle information extraction
+- Updated API documentation with new field examples
+- Improved regex fallback patterns for vehicle field extraction
+- Better field naming consistency across all services
+
+### 📚 Documentation Updates
+- Updated README.md with new vehicle field examples
+- Enhanced API_DOCUMENTATION.md with separated vehicle field specifications
+- Updated example responses to reflect new field structure
+
 ## [2.0.0] - 2025-08-12 - Ollama AI Integration
 
 ### 🚀 Major Changes

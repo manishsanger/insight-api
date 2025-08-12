@@ -54,9 +54,10 @@ The application consists of three microservices:
 
 **Default Extraction Parameters:**
 - Person name
-- Vehicle number  
-- Car color
-- Car model
+- Vehicle registration number  
+- Vehicle make (manufacturer/brand)
+- Vehicle color
+- Vehicle model
 - Location
 - Event/crime/violation type
 
@@ -107,20 +108,37 @@ All data is persisted in `/Users/manishsanger/docker-data/`:
 
 ### Parse Text Message
 ```bash
-curl -X POST http://localhost:8650/api/parse-message 
-  -F "message=Red Toyota Camry license plate ABC123 was involved in an accident at Main Street"
+curl -X POST http://localhost:8650/api/public/parse-message \
+  -F "message=Add Traffic Offence Report. Driver name is James Smith, male, DOB 12/02/2000. Vehicle Registration OU18ZFB a blue BMW 420. Offence is No Seat Belt at Oxford Road, Cheltenham."
+```
+
+**Example Response:**
+```json
+{
+  "extracted_info": {
+    "driver_name": "James Smith",
+    "date_of_birth": "12/02/2000", 
+    "gender": "Male",
+    "vehicle_registration": "OU18ZFB",
+    "vehicle_make": "BMW",
+    "vehicle_color": "Blue", 
+    "vehicle_model": "420",
+    "offence": "No Seat Belt",
+    "location_of_offence": "Oxford Road, Cheltenham"
+  }
+}
 ```
 
 ### Parse Audio File
 ```bash
-curl -X POST http://localhost:8650/api/parse-message 
+curl -X POST http://localhost:8650/api/public/parse-message \
   -F "audio_message=@recording.wav"
 ```
 
 ### Admin Authentication
 ```bash
-curl -X POST http://localhost:8650/api/auth/login 
-  -H "Content-Type: application/json" 
+curl -X POST http://localhost:8650/api/auth/login \
+  -H "Content-Type: application/json" \
   -d '{"username": "admin", "password": "Apple@123"}'
 ```
 

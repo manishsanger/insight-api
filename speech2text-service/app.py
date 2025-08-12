@@ -115,8 +115,14 @@ Please extract and format the information as follows:
 - Offence Occurred at: [time and date]
 - Offence: [specific offence description]
 - Vehicle Registration: [registration number]
-- Vehicle Manufacturer: [car manufacturer]
-- Vehicle Model: [car model and color]
+- Vehicle Make: [car manufacturer/brand only, e.g., BMW, Toyota, Ford]
+- Vehicle Color: [vehicle color only, e.g., Blue, Red, Black]
+- Vehicle Model: [vehicle model/series only, e.g., 420, Camry, Focus]
+
+IMPORTANT: For vehicle information, extract Vehicle Make, Vehicle Color, and Vehicle Model as separate fields.
+- Vehicle Make should only contain the manufacturer/brand name
+- Vehicle Color should only contain the color
+- Vehicle Model should only contain the model/series number or name
 
 Only include fields that are mentioned in the text. If information is not available, omit that field.
 Format the response exactly as shown above with each field on a new line.
