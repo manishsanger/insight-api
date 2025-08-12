@@ -8,7 +8,7 @@ The application consists of three microservices:
 
 1. **Officer Insight API** (Python/Flask) - Main REST API service
 2. **Admin UI** (React/Node.js) - Administrative web interface  
-3. **Speech2Text Service** (Python/Whisper) - Audio to text conversion
+3. **Speech2Text Service** (Python/Ollama) - Audio to text conversion and AI processing
 
 ## 🚀 Quick Start
 
@@ -45,7 +45,7 @@ The application consists of three microservices:
 **Key Features:**
 - Audio file processing through Speech2Text integration
 - Text message parsing and information extraction
-- AI-powered extraction using Ollama with regex fallback
+- AI-powered extraction using Ollama with enhanced prompt engineering
 - JWT-based authentication for admin operations
 - Configurable extraction parameters
 - Request logging and monitoring
@@ -73,16 +73,18 @@ The application consists of three microservices:
 - Mobile-responsive design
 
 ### Speech2Text Service (Port 8652)
-**Audio to text conversion using OpenAI Whisper**
+**Audio to text conversion using Ollama AI**
 
 **Key Features:**
-- High-quality audio transcription using Whisper Turbo model
+- High-quality audio transcription using FFmpeg audio preprocessing
+- Advanced text processing with Ollama AI (llama3.2:latest model)
 - Support for multiple audio formats (WAV, MP3, MP4, FLAC, etc.)
 - Token-based authentication
 - File storage with persistent mounting
 - Health monitoring and file management
 - Comprehensive test suite
 - API documentation
+- Structured information extraction for traffic offense reports
 
 ## 🔧 Management Scripts
 
@@ -152,8 +154,8 @@ When started with the `clean` flag, the system loads sample extraction data incl
 **Backend Services:**
 - Python 3.11 with Flask
 - MongoDB for data storage
-- OpenAI Whisper for speech recognition
-- Ollama for AI-powered text extraction
+- Ollama AI for text processing and structured data extraction
+- FFmpeg for audio preprocessing
 - JWT for authentication
 - Docker for containerization
 
@@ -173,8 +175,9 @@ When started with the `clean` flag, the system loads sample extraction data incl
 
 **Speech2Text Service:**
 - Supports files up to 100MB
-- Processing time varies by audio length
-- Turbo model optimized for speed vs accuracy
+- Processing time varies by audio length and AI processing complexity
+- Ollama llama3.2:latest model optimized for structured data extraction
+- Enhanced prompt engineering for traffic offense report parsing
 
 **Officer Insight API:**
 - Handles concurrent requests
@@ -191,16 +194,21 @@ When started with the `clean` flag, the system loads sample extraction data incl
 Key environment variables:
 - `MONGODB_URI` - Database connection string
 - `SPEECH2TEXT_API_TOKEN` - Service authentication token
-- `OLLAMA_URL` - AI service endpoint
+- `OLLAMA_URL` - Ollama AI service endpoint (http://host.docker.internal:11434)
+- `OLLAMA_MODEL` - Ollama model name (llama3.2:latest)
 - `REACT_APP_API_BASE_URL` - Frontend API configuration
 
 ## 📚 Documentation
 
 Each service includes comprehensive documentation:
+- `README.md` - Main project documentation and quick start guide
+- `API_DOCUMENTATION.md` - Complete API reference with examples
+- `CHANGELOG.md` - Version history and migration notes
 - `officer-insight-api/README.md` - API service documentation
 - `speech2text-service/README.md` - Speech service documentation  
 - `admin-ui/README.md` - Admin interface documentation
 - `DEPLOYMENT.md` - Detailed deployment instructions
+- Interactive API docs available at `/docs/` endpoints
 
 ## 🚨 Troubleshooting
 

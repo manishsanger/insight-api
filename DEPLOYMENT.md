@@ -6,9 +6,9 @@ This guide provides detailed instructions for deploying the Insight API system i
 
 ### Hardware Requirements
 - **CPU**: 4+ cores recommended
-- **RAM**: 8GB minimum, 16GB recommended
+- **RAM**: 8GB minimum, 16GB recommended for Ollama AI processing
 - **Storage**: 50GB+ available space
-- **Network**: Internet connectivity for initial setup
+- **Network**: Internet connectivity for initial setup and Ollama model access
 
 ### Software Requirements
 - Docker 20.10+
@@ -90,7 +90,8 @@ environment:
 
 **Speech2Text Service:**
 - `API_TOKEN`: Authentication token
-- `WHISPER_MODEL`: Whisper model (turbo/base/small/medium/large)
+- `OLLAMA_URL`: Ollama AI service URL
+- `OLLAMA_MODEL`: Ollama model name
 - `MAX_CONTENT_LENGTH`: Maximum file size
 
 **Admin UI:**
@@ -397,13 +398,19 @@ curl -v http://localhost:8650/api/health
 
 **Speech2Text Service:**
 ```bash
-# Check Whisper model loading
+# Check Ollama connectivity and model availability
 docker logs insight-speech2text
 
-# Test audio conversion
+# Test audio conversion with AI processing
 curl -X POST http://localhost:8652/api/convert \
   -H "Authorization: Bearer insight_speech_token_2024" \
   -F "audio_file=@test.wav"
+
+# Test direct text processing
+curl -X POST http://localhost:8652/api/process-text \
+  -H "Authorization: Bearer insight_speech_token_2024" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Test message for AI processing"}'
 ```
 
 ## 🔐 Security Considerations

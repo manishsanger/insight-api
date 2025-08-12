@@ -5,7 +5,8 @@ A REST API service for processing audio files and text messages to extract struc
 ## Features
 
 - **Audio to Text Conversion**: Convert audio files to text using Speech2Text service
-- **Information Extraction**: Extract structured information using Ollama AI with fallback to regex patterns
+- **Information Extraction**: Extract structured information using Ollama AI (llama3.2:latest model)
+- **Enhanced Prompt Engineering**: Optimized prompts for traffic offense report parsing
 - **Admin Panel Integration**: Secure admin APIs for managing extraction parameters
 - **Health Monitoring**: Built-in health check endpoints
 - **JWT Authentication**: Secure authentication for admin operations
@@ -92,7 +93,8 @@ curl -X GET http://localhost:8650/api/admin/parameters \
 - `MONGODB_URI`: MongoDB connection string
 - `SPEECH2TEXT_API_URL`: Speech2Text service URL
 - `SPEECH2TEXT_API_TOKEN`: Authentication token for Speech2Text service
-- `OLLAMA_URL`: Ollama AI service URL
+- `OLLAMA_URL`: Ollama AI service URL (default: http://host.docker.internal:11434)
+- `OLLAMA_MODEL`: Ollama model name (default: llama3.2:latest)
 - `JWT_SECRET_KEY`: Secret key for JWT tokens
 
 ## Dependencies

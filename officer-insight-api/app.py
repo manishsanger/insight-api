@@ -99,7 +99,7 @@ auth_ns = Namespace('auth', description='Authentication operations')
 admin_ns = Namespace('admin', description='Admin operations')
 public_ns = Namespace('public', description='Public API operations')
 
-api.add_namespace(auth_ns, path='/')
+api.add_namespace(auth_ns, path='/auth')
 api.add_namespace(admin_ns, path='/admin')
 api.add_namespace(public_ns, path='/public')
 
@@ -158,35 +158,65 @@ def extract_information_with_ollama(text, parameters):
     """Extract information using Ollama AI"""
     try:
         param_names = [p['name'] for p in parameters if p['active']]
+        
+        # Enhanced prompt for better extraction
         prompt = f"""
-Extract the following information from this text: {text}
+You are an expert at extracting structured information from police reports and incident descriptions.
 
-Please extract these fields if available:
-{', '.join(param_names)}
+Parse the following text and extract information in this exact format:
 
-Return the result as a JSON object with the field names as keys. 
-If information is not available, set the value to null.
-Only return valid JSON, no additional text.
+Input text: {text}
+
+Please extract and format the information as follows (only include fields that are mentioned in the text):
+- Offence Category: [type of offence]
+- Driver Name: [full name] 
+- Date of Birth: [DD/MM/YYYY format]
+- Gender: [Male/Female/Other]
+- Address: [full address]
+- Location of Offence: [location where offence occurred]
+- Offence Occurred at: [time and date]
+- Offence: [specific offence description]
+- Vehicle Registration: [registration number]
+- Vehicle Manufacturer: [car manufacturer]
+- Vehicle Model: [car model and color]
+
+Available parameters to extract: {', '.join(param_names)}
+
+Format the response exactly as shown above with each field on a new line.
+If information is not available, omit that field entirely.
+Do not include any additional explanations or text.
 """
 
         response = requests.post(
             f"{app.config['OLLAMA_URL']}/api/generate",
             json={
-                "model": "llama2",
+                "model": "llama3.2:latest",
                 "prompt": prompt,
                 "stream": False
             },
-            timeout=30
+            timeout=60
         )
         
         if response.status_code == 200:
             result = response.json()
-            try:
-                extracted_data = json.loads(result.get('response', '{}'))
-                return extracted_data
-            except json.JSONDecodeError:
-                return extract_information_with_regex(text, parameters)
+            processed_text = result.get('response', '').strip()
+            
+            # Parse the structured response into a dictionary
+            extracted_data = {}
+            lines = processed_text.split('\n')
+            
+            for line in lines:
+                line = line.strip()
+                if ':' in line and line.startswith('- '):
+                    key, value = line[2:].split(':', 1)
+                    key = key.strip()
+                    value = value.strip()
+                    if value and value.lower() not in ['[not mentioned]', '[not available]', 'n/a', 'none']:
+                        extracted_data[key.lower().replace(' ', '_')] = value
+            
+            return extracted_data
         else:
+            print(f"Ollama API error: {response.status_code}")
             return extract_information_with_regex(text, parameters)
             
     except Exception as e:
@@ -254,7 +284,7 @@ def extract_information_with_regex(text, parameters):
     return extracted
 
 def convert_audio_to_text(audio_file):
-    """Convert audio file to text using Speech2Text service"""
+    """Convert audio file to text using Speech2Text service with Ollama"""
     try:
         files = {'audio_file': audio_file}
         headers = {'Authorization': f'Bearer {app.config["SPEECH2TEXT_API_TOKEN"]}'}
@@ -267,12 +297,41 @@ def convert_audio_to_text(audio_file):
         )
         
         if response.status_code == 200:
-            return response.json().get('text', '')
+            result = response.json()
+            # The new service returns both text and processed_output
+            return result.get('text', ''), result.get('processed_output', '')
         else:
-            return None
+            print(f"Audio conversion API error: {response.status_code}")
+            return None, None
             
     except Exception as e:
         print(f"Audio conversion error: {e}")
+        return None, None
+
+def process_text_with_ollama_service(text):
+    """Process text using the speech2text service with Ollama"""
+    try:
+        headers = {
+            'Authorization': f'Bearer {app.config["SPEECH2TEXT_API_TOKEN"]}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.post(
+            f"{app.config['SPEECH2TEXT_API_URL']}/api/process-text",
+            json={'text': text},
+            headers=headers,
+            timeout=60
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            return result.get('processed_output', '')
+        else:
+            print(f"Text processing API error: {response.status_code}")
+            return None
+            
+    except Exception as e:
+        print(f"Text processing error: {e}")
         return None
 
 def serialize_mongo_doc(doc):
@@ -623,12 +682,14 @@ class ParseMessage(Resource):
                 return {'message': 'Either text message or audio file is required'}, 400
             
             final_text = text_message
+            processed_output = None
             
             # Convert audio to text if provided
             if audio_file:
-                converted_text = convert_audio_to_text(audio_file)
+                converted_text, audio_processed_output = convert_audio_to_text(audio_file)
                 if converted_text:
                     final_text = converted_text
+                    processed_output = audio_processed_output
                 else:
                     # Log the request
                     mongo.db.requests.insert_one({
@@ -642,15 +703,22 @@ class ParseMessage(Resource):
             if not final_text:
                 return {'message': 'No text to process'}, 400
             
-            # Get active parameters
-            parameters = list(mongo.db.parameters.find({'active': True}))
+            # If we don't have processed output from audio, process the text
+            if not processed_output:
+                processed_output = process_text_with_ollama_service(final_text)
+                if not processed_output:
+                    # Fallback to local Ollama processing
+                    parameters = list(mongo.db.parameters.find({'active': True}))
+                    extracted_info = extract_information_with_ollama(final_text, parameters)
+                    processed_output = self._format_extracted_info(extracted_info)
             
-            # Extract information
-            extracted_info = extract_information_with_ollama(final_text, parameters)
+            # Parse the processed output into structured data
+            extracted_info = self._parse_processed_output(processed_output)
             
             # Save to database
             result_doc = {
                 'original_text': final_text,
+                'processed_output': processed_output,
                 'extracted_info': extracted_info,
                 'has_audio': audio_file is not None,
                 'created_at': datetime.utcnow()
@@ -669,6 +737,7 @@ class ParseMessage(Resource):
             return {
                 'id': str(result.inserted_id),
                 'text': final_text,
+                'processed_output': processed_output,
                 'extracted_info': extracted_info
             }, 200
             
@@ -681,6 +750,43 @@ class ParseMessage(Resource):
                 'created_at': datetime.utcnow()
             })
             return {'message': 'Internal server error'}, 500
+    
+    def _parse_processed_output(self, processed_output):
+        """Parse the structured output into a dictionary"""
+        if not processed_output:
+            return {}
+        
+        extracted_info = {}
+        lines = processed_output.split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            if ':' in line:
+                # Handle both "- Field: Value" and "Field: Value" formats
+                if line.startswith('- '):
+                    line = line[2:]
+                
+                parts = line.split(':', 1)
+                if len(parts) == 2:
+                    key = parts[0].strip()
+                    value = parts[1].strip()
+                    if value and value.lower() not in ['[not mentioned]', '[not available]', 'n/a', 'none', '']:
+                        extracted_info[key.lower().replace(' ', '_')] = value
+        
+        return extracted_info
+    
+    def _format_extracted_info(self, extracted_info):
+        """Format extracted info dictionary into structured text"""
+        if not extracted_info:
+            return ""
+        
+        formatted_lines = []
+        for key, value in extracted_info.items():
+            if value:
+                formatted_key = key.replace('_', ' ').title()
+                formatted_lines.append(f"{formatted_key}: {value}")
+        
+        return '\n'.join(formatted_lines)
 
 @public_ns.route('/health')
 class Health(Resource):

@@ -9,14 +9,14 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Create data directory
-RUN mkdir -p /app/data
-
 # Set environment to development to preserve console logs
 ENV NODE_ENV=development
 
+# Start development server instead of building
+CMD ["npm", "start"]
+
+# Create data directory
+RUN mkdir -p /app/data
+
 # Expose port
 EXPOSE 8651
-
-# Start development server to preserve console logs and enable debugging
-CMD ["npm", "run", "dev"]

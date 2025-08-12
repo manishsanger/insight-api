@@ -7,7 +7,8 @@ I have successfully created a comprehensive microservices-based application with
 ### 1. 🚀 Officer Insight API (Python/Flask - Port 8650)
 **Complete REST API service with:**
 - ✅ Audio file and text message processing
-- ✅ AI-powered information extraction using Ollama (with regex fallback)
+- ✅ AI-powered information extraction using Ollama (llama3.2:latest model)
+- ✅ Enhanced prompt engineering for structured data extraction
 - ✅ Speech2Text service integration
 - ✅ JWT authentication for admin operations
 - ✅ Configurable extraction parameters (person name, vehicle number, car color, etc.)
@@ -30,16 +31,19 @@ I have successfully created a comprehensive microservices-based application with
 - ✅ JWT authentication
 - ✅ Health monitoring
 
-### 3. 🎙️ Speech2Text Service (Python/Whisper - Port 8652)
-**Complete audio-to-text conversion service with:**
-- ✅ OpenAI Whisper integration (Turbo model)
+### 3. 🎙️ Speech2Text Service (Python/Ollama - Port 8652)
+**Complete audio-to-text conversion and AI processing service with:**
+- ✅ FFmpeg integration for audio preprocessing
+- ✅ Ollama AI integration (llama3.2:latest model)
+- ✅ Advanced prompt engineering for structured data extraction
 - ✅ Multiple audio format support (WAV, MP3, MP4, FLAC, etc.)
 - ✅ Token-based authentication
 - ✅ File storage with persistent mounting
-- ✅ Health monitoring
+- ✅ Health monitoring with Ollama connectivity checks
 - ✅ Comprehensive test suite
 - ✅ API documentation
 - ✅ File management endpoints
+- ✅ Traffic offense report parsing optimization
 
 ### 4. 🗄️ Database (MongoDB - Port 27017)
 **Complete database setup with:**
@@ -59,13 +63,16 @@ I have successfully created a comprehensive microservices-based application with
 - ✅ Sample data initialization
 
 ### 6. 📚 Documentation
-**Comprehensive documentation:**
-- ✅ Main project README with quick start
-- ✅ Individual service README files
-- ✅ Detailed deployment guide
-- ✅ API documentation (Swagger)
-- ✅ Configuration instructions
-- ✅ Troubleshooting guides
+**Comprehensive and updated documentation:**
+- ✅ Main project README with Ollama integration details
+- ✅ Complete API documentation with integration examples
+- ✅ Individual service README files (updated for Ollama)
+- ✅ Detailed deployment guide with Ollama requirements
+- ✅ API documentation (Swagger) with enhanced endpoints
+- ✅ Configuration instructions for Ollama integration
+- ✅ Troubleshooting guides with Ollama-specific solutions
+- ✅ Comprehensive changelog documenting the migration
+- ✅ Performance and security considerations
 
 ## 🏗️ Project Structure
 ```
@@ -143,7 +150,8 @@ curl -X POST http://localhost:8650/api/parse-message \
 - **Admin Panel**: ✅ Full React Admin interface
 - **Health Checks**: ✅ All services with comprehensive monitoring
 - **Documentation**: ✅ Complete README and deployment guides
-- **AI Integration**: ✅ Ollama support with fallback to regex
+- **AI Integration**: ✅ Ollama llama3.2:latest model with enhanced prompt engineering
+- **Audio Processing**: ✅ FFmpeg for audio conversion with Ollama for text processing
 - **Default Parameters**: ✅ Person name, vehicle number, car color, etc.
 
 ### 🎯 Additional Features Added:

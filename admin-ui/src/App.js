@@ -8,6 +8,11 @@ import { ParameterList, ParameterEdit, ParameterCreate } from './components/Para
 import { RequestList } from './components/Requests';
 import { UserList, UserEdit, UserCreate } from './components/Users';
 
+console.log('🚀 App.js loading...');
+console.error('🚨 About to import dataProvider...');
+console.log('✅ DataProvider imported successfully:', dataProvider);
+console.error('🚨 DataProvider imported:', typeof dataProvider);
+
 // Use real data provider with Headers fix
 const selectedDataProvider = dataProvider; // Change to mockDataProvider if needed for debugging
 
