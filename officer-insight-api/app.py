@@ -316,11 +316,40 @@ def extract_information_with_regex(text, parameters):
     
     return extracted
 
-def convert_audio_to_text(audio_file):
-    """Convert audio file to text using Speech2Text service with Ollama"""
+def speechToText(audio_file):
+    """
+    Convert audio file to text using Speech2Text service
+    
+    Args:
+        audio_file: Flask FileStorage object containing the audio file
+        
+    Returns:
+        str: Transcribed text from audio, or None if conversion fails
+    """
     try:
-        files = {'audio_file': audio_file}
+        print(f"=== speechToText method called ===", flush=True)
+        print(f"Speech2Text URL: {app.config['SPEECH2TEXT_API_URL']}", flush=True)
+        print(f"Audio file: {audio_file.filename} ({audio_file.content_type})", flush=True)
+        
+        # Test connectivity first
+        try:
+            health_response = requests.get(f"{app.config['SPEECH2TEXT_API_URL']}/api/health", timeout=5)
+            print(f"Health check response: {health_response.status_code}", flush=True)
+        except Exception as health_error:
+            print(f"Health check failed: {health_error}", flush=True)
+        
+        # Prepare file for forwarding
+        audio_file.seek(0)
+        file_content = audio_file.read()
+        
+        # Create files dict with filename preserved
+        files = {
+            'audio_file': (audio_file.filename, file_content, audio_file.content_type or 'application/octet-stream')
+        }
         headers = {'Authorization': f'Bearer {app.config["SPEECH2TEXT_API_TOKEN"]}'}
+        
+        print(f"Making request to: {app.config['SPEECH2TEXT_API_URL']}/api/convert", flush=True)
+        print(f"File size: {len(file_content)} bytes", flush=True)
         
         response = requests.post(
             f"{app.config['SPEECH2TEXT_API_URL']}/api/convert",
@@ -329,17 +358,23 @@ def convert_audio_to_text(audio_file):
             timeout=120
         )
         
+        print(f"Response status: {response.status_code}", flush=True)
+        
         if response.status_code == 200:
             result = response.json()
-            # The new service returns both text and processed_output
-            return result.get('text', ''), result.get('processed_output', '')
+            transcribed_text = result.get('text', '')
+            print(f"Speech-to-text successful. Text length: {len(transcribed_text)}", flush=True)
+            return transcribed_text
         else:
-            print(f"Audio conversion API error: {response.status_code}")
-            return None, None
+            print(f"Speech2Text API error: {response.status_code}", flush=True)
+            print(f"Response content: {response.text}", flush=True)
+            return None
             
     except Exception as e:
-        print(f"Audio conversion error: {e}")
-        return None, None
+        print(f"speechToText error: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        return None
 
 def process_text_with_ollama_service(text):
     """Process text using the speech2text service with Ollama"""
@@ -832,42 +867,59 @@ class ParseMessage(Resource):
     def post(self):
         """Parse text message or audio file and extract information"""
         try:
+            print(f"=== MAIN API: parse-message endpoint called ===", flush=True)
+            
             text_message = request.form.get('message')
             audio_file = request.files.get('audio_message')
             
+            print(f"Text message: {text_message}", flush=True)
+            print(f"Audio file: {audio_file}", flush=True)
+            print(f"Request files: {list(request.files.keys())}", flush=True)
+            print(f"Request form: {list(request.form.keys())}", flush=True)
+            
             if not text_message and not audio_file:
+                print("No text message or audio file provided", flush=True)
                 return {'message': 'Either text message or audio file is required'}, 400
             
             final_text = text_message
-            processed_output = None
             
-            # Convert audio to text if provided
+            # Convert audio to text if audio_message is provided
             if audio_file:
-                converted_text, audio_processed_output = convert_audio_to_text(audio_file)
+                print(f"Audio file detected, calling speechToText method", flush=True)
+                converted_text = speechToText(audio_file)
+                print(f"speechToText result: {converted_text[:100] if converted_text else None}...", flush=True)
+                
                 if converted_text:
                     final_text = converted_text
-                    processed_output = audio_processed_output
+                    print(f"Audio successfully converted to text", flush=True)
                 else:
-                    # Log the request
+                    # Audio processing failed - provide helpful error message
+                    print("Audio processing failed, logging error to database", flush=True)
                     mongo.db.requests.insert_one({
                         'endpoint': '/api/parse-message',
                         'status': 'error',
-                        'error': 'Failed to convert audio to text',
+                        'error': 'Audio processing failed - please provide text message instead',
                         'created_at': datetime.utcnow()
                     })
-                    return {'message': 'Failed to convert audio to text'}, 500
+                    return {
+                        'message': 'Audio processing is currently unavailable. Please use the "message" parameter to provide your report as text instead.',
+                        'suggestion': 'Try using the text input: message="Your police report text here"',
+                        'example': 'message="Officer Johnson reporting traffic violation. Red Honda Civic plate ABC123 speeding in school zone."'
+                    }, 400
             
             if not final_text:
                 return {'message': 'No text to process'}, 400
             
-            # If we don't have processed output from audio, process the text
+            print(f"Processing final text with Ollama: {final_text[:100]}...", flush=True)
+            
+            # Use Ollama to extract information from the text (either from audio conversion or direct text input)
+            processed_output = process_text_with_ollama_service(final_text)
             if not processed_output:
-                processed_output = process_text_with_ollama_service(final_text)
-                if not processed_output:
-                    # Fallback to local Ollama processing
-                    parameters = list(mongo.db.parameters.find({'active': True}))
-                    extracted_info = extract_information_with_ollama(final_text, parameters)
-                    processed_output = self._format_extracted_info(extracted_info)
+                # Fallback to local Ollama processing
+                print("Remote Ollama processing failed, using local fallback", flush=True)
+                parameters = list(mongo.db.parameters.find({'active': True}))
+                extracted_info = extract_information_with_ollama(final_text, parameters)
+                processed_output = self._format_extracted_info(extracted_info)
             
             # Parse the processed output into structured data
             extracted_info = self._parse_processed_output(processed_output)
@@ -899,6 +951,9 @@ class ParseMessage(Resource):
             }, 200
             
         except Exception as e:
+            print(f"Exception in parse-message: {e}", flush=True)
+            import traceback
+            traceback.print_exc()
             # Log the error
             mongo.db.requests.insert_one({
                 'endpoint': '/api/parse-message',
@@ -1048,7 +1103,12 @@ class Health(Resource):
         }, 200
 
 if __name__ == '__main__':
+    print("=== Starting main API application ===")
     with app.app_context():
         init_database()
+    
+    print("=== Flask app routes ===")
+    for rule in app.url_map.iter_rules():
+        print(f"Route: {rule.rule} -> {rule.endpoint}")
     
     app.run(host='0.0.0.0', port=8650, debug=False)
