@@ -124,6 +124,7 @@ curl -X POST http://localhost:8650/api/public/car-identifier \
 {
   "id": "extraction_id",
   "filename": "vehicle_photo.jpg",
+  "model": "gemma3:12b",
   "processed_output": "Vehicle Registration: AB67XYZ\nVehicle Make: BMW\nVehicle Color: Blue\nVehicle Model: 320i",
   "extracted_info": {
     "vehicle_registration": "AB67XYZ",
@@ -141,7 +142,7 @@ curl -X POST http://localhost:8650/api/public/car-identifier \
 - BMP
 - WebP
 
-**AI Model:** Uses Ollama LLaVA 13B v1.5 FP16 vision model for accurate vehicle identification.
+**AI Model:** Uses Ollama Gemma3:12b vision model for accurate vehicle identification with enhanced transparency showing which model processed the request.
 
 #### Health Check
 **Endpoint:** `GET /public/health`

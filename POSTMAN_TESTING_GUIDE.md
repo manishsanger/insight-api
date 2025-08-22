@@ -198,6 +198,12 @@ pm.test("Image processing successful", function () {
     pm.expect(responseJson).to.have.property('extracted_info');
     pm.expect(responseJson).to.have.property('filename');
     pm.expect(responseJson).to.have.property('processed_output');
+    pm.expect(responseJson).to.have.property('model');
+});
+
+pm.test("Model information included", function () {
+    const responseJson = pm.response.json();
+    pm.expect(responseJson.model).to.equal('gemma3:12b');
 });
 
 pm.test("Vehicle details extracted", function () {
@@ -215,7 +221,7 @@ pm.test("Vehicle details extracted", function () {
 });
 
 pm.test("Processing time acceptable for vision model", function () {
-    pm.expect(pm.response.responseTime).to.be.below(180000); // 3 minutes for LLaVA 13B
+    pm.expect(pm.response.responseTime).to.be.below(180000); // 3 minutes for Gemma3:12b
 });
 ```
 
@@ -564,12 +570,12 @@ curl http://localhost:8652/api/health
 - Health checks: < 1 second
 - Text processing: 5-15 seconds
 - Audio processing: 30-120 seconds
-- Image processing: 60-180 seconds (LLaVA 13B)
+- Image processing: 60-180 seconds (Gemma3:12b)
 - Admin operations: < 5 seconds
 
 ### Resource Usage
 - Monitor CPU and memory during testing
-- Large model processing (LLaVA 13B) requires more resources
+- Large model processing (Gemma3:12b) requires more resources
 - Audio files increase processing time based on duration
 
 This comprehensive testing guide covers all aspects of the Insight API system. Use it to validate functionality, performance, and reliability of your API endpoints.

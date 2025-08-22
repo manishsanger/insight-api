@@ -16,7 +16,7 @@ The application consists of three microservices:
 - Docker and Docker Compose
 - 4GB+ available RAM
 - 10GB+ available disk space
-- **Ollama with LLaVA 13B vision model** (for vehicle image identification)
+- **Ollama with Gemma3:12b vision model** (for vehicle image identification)
 
 ### Start All Services
 ```bash
@@ -27,10 +27,10 @@ The application consists of three microservices:
 ./scripts/start.sh
 ```
 
-### Setup LLaVA Vision Model (Required for Image Identification)
+### Setup Gemma3 Vision Model (Required for Image Identification)
 ```bash
-# Pull the LLaVA 13B vision model with FP16 precision in Ollama
-ollama pull llava:13b-v1.5-fp16
+# Pull the Gemma3 12B vision model in Ollama
+ollama pull gemma3:12b
 
 # Verify the model is available
 ollama list
@@ -155,6 +155,10 @@ curl -X POST http://localhost:8650/api/public/car-identifier \
 **Example Response:**
 ```json
 {
+  "id": "extraction_id",
+  "filename": "vehicle_photo.jpg",
+  "model": "gemma3:12b",
+  "processed_output": "Vehicle Registration: AB67XYZ\nVehicle Make: BMW\nVehicle Color: Blue\nVehicle Model: 320i",
   "extracted_info": {
     "vehicle_registration": "AB67XYZ",
     "vehicle_make": "BMW",
@@ -202,7 +206,7 @@ When started with the `clean` flag, the system loads sample extraction data incl
 - Python 3.11 with Flask
 - MongoDB for data storage
 - Ollama AI for text processing and structured data extraction
-- **Ollama LLaVA 13B** for vehicle image identification
+- **Ollama Gemma3:12b** for vehicle image identification
 - FFmpeg for audio preprocessing
 - JWT for authentication
 - Docker for containerization

@@ -7,8 +7,10 @@ I have successfully created a comprehensive microservices-based application with
 ### 1. 🚀 Officer Insight API (Python/Flask - Port 8650)
 **Complete REST API service with:**
 - ✅ Audio file and text message processing
+- ✅ **Vehicle image identification using Gemma3:12b vision model**
 - ✅ AI-powered information extraction using Ollama (llama3.2:latest model)
 - ✅ Enhanced prompt engineering for structured data extraction
+- ✅ **Enhanced API responses with model name transparency**
 - ✅ Speech2Text service integration
 - ✅ JWT authentication for admin operations
 - ✅ Configurable extraction parameters (person name, vehicle number, car color, etc.)
@@ -129,12 +131,16 @@ insight-api/
 3. **Test the API:**
 ```bash
 # Parse text message
-curl -X POST http://localhost:8650/api/parse-message \
+curl -X POST http://localhost:8650/api/public/parse-message \
   -F "message=Red Toyota Camry license plate ABC123 was involved in an accident at Main Street"
 
 # Parse audio file
-curl -X POST http://localhost:8650/api/parse-message \
+curl -X POST http://localhost:8650/api/public/parse-message \
   -F "audio_message=@audio_file.wav"
+
+# Identify vehicle from image
+curl -X POST http://localhost:8650/api/public/car-identifier \
+  -F "image=@vehicle_photo.jpg"
 ```
 
 ## 🔧 Key Features Implemented
@@ -155,6 +161,8 @@ curl -X POST http://localhost:8650/api/parse-message \
 - **Default Parameters**: ✅ Person name, vehicle number, car color, etc.
 
 ### 🎯 Additional Features Added:
+- **Vehicle Image Identification**: AI-powered vehicle recognition using Gemma3:12b model
+- **Enhanced API Transparency**: Model name included in responses for better tracking
 - **Swagger Documentation**: Interactive API docs for both services
 - **Test Suite**: Comprehensive tests for Speech2Text service
 - **Real-time Dashboard**: Charts and statistics in Admin UI

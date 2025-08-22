@@ -432,7 +432,7 @@ Focus on identifying the vehicle make, color, and model even if the license plat
         response = requests.post(
             f"{app.config['OLLAMA_URL']}/api/generate",
             json={
-                "model": "llava:13b-v1.5-fp16",  # Use LLaVA 13B vision model with FP16 precision
+                "model": "gemma3:12b",  # Use Gemma3 12B model for vehicle analysis
                 "prompt": prompt,
                 "images": [image_base64],
                 "stream": False
@@ -1056,6 +1056,7 @@ class CarIdentifier(Resource):
             return {
                 'id': str(result.inserted_id),
                 'filename': image_file.filename,
+                'model': 'gemma3:12b',
                 'processed_output': processed_output,
                 'extracted_info': extracted_info
             }, 200

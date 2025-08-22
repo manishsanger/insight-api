@@ -14,6 +14,7 @@ This guide provides detailed instructions for deploying the Insight API system i
 - Docker 20.10+
 - Docker Compose 2.0+
 - Git (for source code)
+- **Ollama with Gemma3:12b vision model** (for vehicle image identification)
 - 4GB+ available RAM for containers
 
 ### Supported Operating Systems
@@ -45,6 +46,9 @@ sudo chown -R $USER:$USER /Users/manishsanger/docker-data
 
 ### 4. Deploy Services
 ```bash
+# Install Gemma3 model for vehicle identification
+ollama pull gemma3:12b
+
 # Clean deployment (fresh data)
 ./scripts/start.sh clean
 

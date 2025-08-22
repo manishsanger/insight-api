@@ -2,6 +2,53 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2025-08-22 - Gemma3 Vision Model & Enhanced Response
+
+### 🚀 Major Changes
+- **BREAKING CHANGE**: Upgraded from LLaVA to Gemma3:12b vision model for vehicle identification
+- **NEW FEATURE**: Enhanced API response format includes model name for transparency
+- **IMPROVED**: Better vision processing capabilities with Gemma3 model
+
+### ✨ Features Added
+- **Enhanced Vehicle Image Identification**:
+  - Upgraded to Gemma3:12b vision model for superior accuracy
+  - Model name included in API response: `"model": "gemma3:12b"`
+  - Improved vehicle recognition capabilities
+  - Better license plate detection and reading
+
+- **Transparent AI Processing**:
+  - API responses now show which model processed the request
+  - Enhanced debugging and audit capabilities
+  - Better tracking of AI model performance
+
+### 🔧 Technical Improvements
+- **Model Configuration**: Updated `process_image_with_ollama` function to use Gemma3:12b
+- **Response Enhancement**: Added model field to car-identifier API response
+- **Extended Timeout**: Increased processing timeout to 180 seconds for model processing
+- **Container Optimization**: Proper deployment with fresh container rebuild
+
+### 🔄 Migration Changes
+- **Model Update**: Changed from `llava:13b-v1.5-fp16` to `gemma3:12b`
+- **API Response**: Added `model` field to car-identifier endpoint response
+- **Documentation**: Updated all setup guides to use Gemma3 model
+
+### 📚 Documentation Updates
+- Updated README.md with Gemma3 setup instructions
+- Enhanced API documentation with new response format
+- Updated all examples to reflect model name inclusion
+- Modified installation guides for Gemma3 model
+
+### 🛠️ Developer Experience
+- **Deployment Verification**: Enhanced container rebuild and restart procedures
+- **Testing Improvements**: Better validation of deployed changes
+- **Monitoring**: Model name tracking for better system observability
+
+### 📋 Migration Notes
+1. **Required Action**: Update Ollama installation to use `ollama pull gemma3:12b`
+2. **API Changes**: Car-identifier responses now include model field
+3. **Backward Compatibility**: Existing API structure maintained, only enhanced
+4. **Performance**: Similar or improved processing times with Gemma3 model
+
 ## [2.2.1] - 2025-08-12 - Enhanced Vision Model
 
 ### 🔧 Technical Improvements
