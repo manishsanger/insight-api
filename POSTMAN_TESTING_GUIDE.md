@@ -1,19 +1,23 @@
-# Postman Testing Guide - Insight API
+# Officer Insight API System - Postman Testing Guide
 
-This guide provides step-by-step instructions for testing all API endpoints using Postman. The Insight API system includes three main services with various endpoints for authentication, text processing, audio processing, and vehicle image identification.
+This comprehensive guide provides step-by-step instructions for testing all API endpoints using Postman. The Officer Insight API System consists of four microservices that work together to process text messages, audio files, and vehicle images using AI for structured information extraction.
 
 ## 📋 Prerequisites
 
 1. **Postman** installed (Desktop app or web version)
-2. **Insight API services running** on your local machine
+2. **All services running** on your local machine (use `./scripts/build.sh`)
 3. **Sample files** for testing:
    - Audio file (WAV, MP3, MP4, FLAC)
    - Vehicle image (JPG, PNG, GIF, BMP, WebP)
+4. **AI Services** running:
+   - Ollama with Gemma3:12b model
+   - Whisper for speech-to-text
 
 ## 🌐 Base URLs
 
 ```
 Officer Insight API: http://localhost:8650/api
+Car Identifier Service: http://localhost:8653/api
 Speech2Text Service: http://localhost:8652/api
 Admin UI: http://localhost:8651
 ```
@@ -26,8 +30,10 @@ Create a new environment in Postman with these variables:
 
 | Variable Name | Value |
 |--------------|-------|
-| `base_url` | `http://localhost:8650/api` |
+| `officer_api_base_url` | `http://localhost:8650` |
+| `car_identifier_base_url` | `http://localhost:8653` |
 | `speech_url` | `http://localhost:8652/api` |
+| `admin_ui_url` | `http://localhost:8651` |
 | `jwt_token` | `{{jwt_token}}` (will be set automatically) |
 | `speech_token` | `insight_speech_token_2024` |
 
@@ -35,14 +41,14 @@ Create a new environment in Postman with these variables:
 
 1. Open Postman
 2. Click "New" → "Collection"
-3. Name it "Insight API Tests"
-4. Add description: "Complete API testing for Insight API system"
+3. Name it "Officer Insight API System Tests"
+4. Add description: "Complete API testing for Officer Insight API System with four microservices"
 
 ## 🔐 Authentication Tests
 
 ### Test 1: Admin Login
 
-**Endpoint:** `POST {{base_url}}/auth/login`
+**Endpoint:** `POST {{officer_api_base_url}}/api/auth/login`
 
 **Headers:**
 ```
@@ -85,9 +91,9 @@ pm.test("Response contains role", function () {
 
 ## 🌍 Public API Tests (No Authentication Required)
 
-### Test 2: Health Check
+### Test 2: Officer Insight API Health Check
 
-**Endpoint:** `GET {{base_url}}/public/health`
+**Endpoint:** `GET {{officer_api_base_url}}/api/public/health`
 
 **Headers:** None required
 
@@ -108,9 +114,34 @@ pm.test("Services status included", function () {
 });
 ```
 
-### Test 3: Parse Text Message
+### Test 3: Car Identifier Service Health Check
 
-**Endpoint:** `POST {{base_url}}/public/parse-message`
+**Endpoint:** `GET {{car_identifier_base_url}}/api/public/health`
+
+**Headers:** None required
+
+**Test Script:**
+```javascript
+pm.test("Car identifier service healthy", function () {
+    pm.response.to.have.status(200);
+    const responseJson = pm.response.json();
+    pm.expect(responseJson).to.have.property('status');
+    pm.expect(responseJson.status).to.eql('healthy');
+    pm.expect(responseJson).to.have.property('service');
+    pm.expect(responseJson.service).to.eql('car-identifier-service');
+});
+
+pm.test("Model configuration included", function () {
+    const responseJson = pm.response.json();
+    pm.expect(responseJson).to.have.property('model');
+    pm.expect(responseJson).to.have.property('extraction_fields');
+    pm.expect(responseJson.extraction_fields).to.be.an('array');
+});
+```
+
+### Test 4: Parse Text Message
+
+**Endpoint:** `POST {{officer_api_base_url}}/api/public/parse-message`
 
 **Headers:**
 ```
@@ -147,9 +178,9 @@ pm.test("Driver information extracted", function () {
 });
 ```
 
-### Test 4: Parse Audio Message
+### Test 5: Parse Audio Message
 
-**Endpoint:** `POST {{base_url}}/public/parse-message`
+**Endpoint:** `POST {{officer_api_base_url}}/api/public/parse-message`
 
 **Headers:**
 ```
@@ -176,9 +207,9 @@ pm.test("Response time is acceptable", function () {
 });
 ```
 
-### Test 5: Vehicle Image Identification
+### Test 6: Vehicle Image Identification (Car Identifier Service)
 
-**Endpoint:** `POST {{base_url}}/public/car-identifier`
+**Endpoint:** `POST {{car_identifier_base_url}}/api/public/car-identifier`
 
 **Headers:**
 ```
@@ -227,9 +258,9 @@ pm.test("Processing time acceptable for vision model", function () {
 
 ## 🔒 Admin API Tests (Requires JWT Token)
 
-### Test 6: Dashboard Statistics
+### Test 7: Dashboard Statistics
 
-**Endpoint:** `GET {{base_url}}/admin/dashboard`
+**Endpoint:** `GET {{officer_api_base_url}}/api/admin/dashboard`
 
 **Headers:**
 ```
@@ -247,9 +278,9 @@ pm.test("Dashboard access successful", function () {
 });
 ```
 
-### Test 7: List Parameters
+### Test 8: List Parameters
 
-**Endpoint:** `GET {{base_url}}/admin/parameters`
+**Endpoint:** `GET {{officer_api_base_url}}/api/admin/parameters`
 
 **Headers:**
 ```
@@ -266,9 +297,9 @@ pm.test("Parameters list retrieved", function () {
 });
 ```
 
-### Test 8: Create Parameter
+### Test 9: Create Parameter
 
-**Endpoint:** `POST {{base_url}}/admin/parameters`
+**Endpoint:** `POST {{officer_api_base_url}}/api/admin/parameters`
 
 **Headers:**
 ```
@@ -298,9 +329,9 @@ pm.test("Parameter created successfully", function () {
 });
 ```
 
-### Test 9: List Requests
+### Test 10: List Requests
 
-**Endpoint:** `GET {{base_url}}/admin/requests`
+**Endpoint:** `GET {{officer_api_base_url}}/api/admin/requests`
 
 **Headers:**
 ```
@@ -322,9 +353,9 @@ pm.test("Requests list retrieved", function () {
 });
 ```
 
-### Test 10: List Users
+### Test 11: List Users
 
-**Endpoint:** `GET {{base_url}}/admin/users`
+**Endpoint:** `GET {{officer_api_base_url}}/api/admin/users`
 
 **Headers:**
 ```
@@ -343,7 +374,7 @@ pm.test("Users list retrieved", function () {
 
 ## 🎤 Speech2Text Service Tests
 
-### Test 11: Speech2Text Health Check
+### Test 12: Speech2Text Health Check
 
 **Endpoint:** `GET {{speech_url}}/health`
 
@@ -365,7 +396,7 @@ pm.test("Ollama status included", function () {
 });
 ```
 
-### Test 12: Direct Audio Conversion
+### Test 13: Direct Audio Conversion
 
 **Endpoint:** `POST {{speech_url}}/convert`
 
@@ -390,7 +421,7 @@ pm.test("Audio conversion successful", function () {
 });
 ```
 
-### Test 13: Direct Text Processing
+### Test 14: Direct Text Processing
 
 **Endpoint:** `POST {{speech_url}}/process-text`
 
@@ -419,9 +450,9 @@ pm.test("Text processing successful", function () {
 
 ## 🧪 Error Testing
 
-### Test 14: Invalid Authentication
+### Test 15: Invalid Authentication
 
-**Endpoint:** `GET {{base_url}}/admin/dashboard`
+**Endpoint:** `GET {{officer_api_base_url}}/api/admin/dashboard`
 
 **Headers:**
 ```
@@ -435,9 +466,9 @@ pm.test("Invalid token rejected", function () {
 });
 ```
 
-### Test 15: Missing Required Field
+### Test 16: Missing Required Field
 
-**Endpoint:** `POST {{base_url}}/public/car-identifier`
+**Endpoint:** `POST {{car_identifier_base_url}}/api/public/car-identifier`
 
 **Headers:**
 ```
@@ -498,10 +529,10 @@ console.log(`⏱️ Response Time: ${pm.response.responseTime}ms`);
 
 ### Option 2: Collection Runner
 1. Click "Runner" in Postman
-2. Select your "Insight API Tests" collection
+2. Select your "Officer Insight API System Tests" collection
 3. Choose your environment
 4. Set iterations to 1
-5. Click "Run Insight API Tests"
+5. Click "Run Officer Insight API System Tests"
 
 ### Option 3: Newman (Command Line)
 ```bash
@@ -510,7 +541,7 @@ npm install -g newman
 
 # Export your collection and environment from Postman
 # Then run:
-newman run insight-api-tests.json -e insight-api-environment.json
+newman run officer-insight-api-system-tests.json -e officer-insight-api-system-environment.json
 ```
 
 ## 📝 Sample Test Data
@@ -557,11 +588,15 @@ newman run insight-api-tests.json -e insight-api-environment.json
 ```bash
 # Check service logs
 docker logs insight-api-officer-insight-api-1
+docker logs insight-api-car-identifier-service-1
 docker logs insight-api-speech2text-service-1
+docker logs insight-api-admin-ui-1
 
 # Check service health
 curl http://localhost:8650/api/public/health
+curl http://localhost:8653/api/public/health
 curl http://localhost:8652/api/health
+curl http://localhost:8651/health
 ```
 
 ## 📈 Performance Benchmarks
@@ -570,12 +605,13 @@ curl http://localhost:8652/api/health
 - Health checks: < 1 second
 - Text processing: 5-15 seconds
 - Audio processing: 30-120 seconds
-- Image processing: 60-180 seconds (Gemma3:12b)
+- Image processing (Car Identifier): 60-180 seconds (Gemma3:12b)
 - Admin operations: < 5 seconds
 
 ### Resource Usage
 - Monitor CPU and memory during testing
 - Large model processing (Gemma3:12b) requires more resources
 - Audio files increase processing time based on duration
+- Car Identifier Service is resource-intensive due to vision AI model
 
-This comprehensive testing guide covers all aspects of the Insight API system. Use it to validate functionality, performance, and reliability of your API endpoints.
+This comprehensive testing guide covers all aspects of the Officer Insight API System with four microservices. Use it to validate functionality, performance, and reliability of your API endpoints across the entire distributed system.

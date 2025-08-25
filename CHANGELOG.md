@@ -2,6 +2,76 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0] - 2025-08-22 - Microservices Architecture Refactoring
+
+### 🚀 Major Architectural Changes
+- **BREAKING CHANGE**: Refactored system into microservices architecture
+- **NEW SERVICE**: Created dedicated Car Identifier Service (Port 8653)
+- **ENHANCED**: Separated vehicle analysis into independent microservice
+- **IMPROVED**: Configurable extraction fields and AI model parameters
+
+### ✨ New Features
+
+#### Car Identifier Service
+- **Independent Service**: Dedicated microservice for vehicle image analysis
+- **Configurable Parameters**: Environment-based configuration for extraction fields
+- **Enhanced Performance**: Specialized service with optimized resource usage
+- **API Compatibility**: Maintains same `/api/public/car-identifier` endpoint
+
+#### Configuration System
+- **Environment Variables**: Full configuration through .env files
+- **Flexible Fields**: Configurable extraction parameters
+- **Model Settings**: Adjustable AI model timeouts and parameters
+- **Service Limits**: Configurable file size and format restrictions
+
+#### Enhanced Documentation
+- **Service Documentation**: Comprehensive README for car-identifier-service
+- **API Updates**: Updated API documentation for all services
+- **Deployment Guides**: Enhanced deployment and configuration guides
+- **Architecture Diagrams**: Updated system architecture documentation
+
+### 🔧 Technical Improvements
+
+#### Service Configuration
+```bash
+VISION_MODEL=gemma3:12b                    # AI model for vehicle analysis
+EXTRACTION_FIELDS=vehicle_registration,vehicle_make,vehicle_color,vehicle_model
+MODEL_TIMEOUT=180                          # Processing timeout in seconds
+ALLOWED_EXTENSIONS=jpg,jpeg,png,gif,bmp,webp
+MAX_CONTENT_LENGTH=16777216               # 16MB file size limit
+```
+
+#### Deployment Updates
+- **Docker Compose**: Updated configuration with car-identifier-service
+- **Build Scripts**: Enhanced build process for all services
+- **Health Checks**: Improved monitoring for all services
+- **Service Dependencies**: Proper dependency management
+
+### 📚 Documentation Updates
+- **README.md**: Complete overhaul reflecting microservices architecture
+- **API_DOCUMENTATION.md**: Updated with all service endpoints
+- **Car Identifier Service**: New comprehensive service documentation
+- **Deployment Guides**: Updated for new architecture
+
+### 🔄 Migration Guide
+
+#### For Existing Users
+1. **API Compatibility**: All existing endpoints remain functional
+2. **Service Access**: Car identifier available at both ports 8650 and 8653
+3. **Configuration**: New environment variables for enhanced customization
+4. **Deployment**: Use updated docker-compose.yml
+
+#### Breaking Changes
+- System now requires four services instead of three
+- New environment variables for car-identifier-service
+- Enhanced resource requirements for additional service
+
+### 🚀 Performance Improvements
+- **Service Isolation**: Independent scaling of vehicle analysis
+- **Resource Optimization**: Better resource allocation per service
+- **Concurrent Processing**: Enhanced parallel processing capabilities
+- **Error Isolation**: Service-specific error handling and recovery
+
 ## [2.3.0] - 2025-08-22 - Gemma3 Vision Model & Enhanced Response
 
 ### 🚀 Major Changes

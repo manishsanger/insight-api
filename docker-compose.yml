@@ -36,6 +36,28 @@ services:
     volumes:
       - /Users/manishsanger/docker-data/officer-insight-api:/app/data
 
+  car-identifier-service:
+    build: ./car-identifier-service
+    container_name: insight-car-identifier
+    restart: unless-stopped
+    ports:
+      - "8653:8653"
+    environment:
+      MONGODB_URI: mongodb://admin:Apple%40123@mongodb:27017/insight_db?authSource=admin
+      OLLAMA_URL: http://host.docker.internal:11434
+      VISION_MODEL: gemma3:12b
+      MODEL_TIMEOUT: 180
+      CORS_ORIGINS: http://localhost:8651,http://localhost:3000
+      ALLOWED_EXTENSIONS: jpg,jpeg,png,gif,bmp,webp
+      MAX_CONTENT_LENGTH: 16777216
+      EXTRACTION_FIELDS: vehicle_registration,vehicle_make,vehicle_color,vehicle_model
+    depends_on:
+      - mongodb
+    networks:
+      - insight-network
+    volumes:
+      - /Users/manishsanger/docker-data/car-identifier-service:/app/data
+
   admin-ui:
     build: ./admin-ui
     container_name: insight-admin-ui
@@ -44,9 +66,11 @@ services:
       - "8651:8651"
     environment:
       REACT_APP_API_BASE_URL: http://localhost:8650
+      REACT_APP_CAR_IDENTIFIER_URL: http://localhost:8653
       NODE_ENV: production
     depends_on:
       - officer-insight-api
+      - car-identifier-service
     networks:
       - insight-network
     volumes:
@@ -73,5 +97,6 @@ networks:
 volumes:
   mongodb_data:
   officer_api_data:
+  car_identifier_data:
   admin_ui_data:
   speech2text_data:
