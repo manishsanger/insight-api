@@ -263,6 +263,10 @@ def extract_text_info_with_llm(file_path, filename):
         # Parse the AI output to extract structured information
         extracted_info = parse_document_info(ai_output)
         
+        # Add debugging to see the AI output and parsed result
+        logger.info(f"AI Output length: {len(ai_output)} characters")
+        logger.info(f"Parsed fields count: {len([k for k, v in extracted_info.items() if v])}")
+        
         return ai_output, extracted_info
         
     except Exception as e:
@@ -344,16 +348,20 @@ def parse_document_info(ai_output):
     field_mappings = {
         'document type': 'document_type',
         'document_type': 'document_type',
+        'type of document': 'document_type',
         'name': 'name',
         'full name': 'name',
+        'driver name': 'name',
         'date of birth': 'date_of_birth',
         'birth date': 'date_of_birth',
         'dob': 'date_of_birth',
         'country': 'country',
         'date of issue': 'date_of_issue',
         'issue date': 'date_of_issue',
+        'issued': 'date_of_issue',
         'expiry date': 'expiry_date',
         'expiration date': 'expiry_date',
+        'expires': 'expiry_date',
         'address': 'address',
         'gender': 'gender',
         'sex': 'gender',
@@ -361,32 +369,36 @@ def parse_document_info(ai_output):
         'birth place': 'place_of_birth',
         'issuing authority': 'issuing_authority',
         'issued by': 'issuing_authority',
+        'authority': 'issuing_authority',
         'nationality': 'nationality',
         'pin code': 'pin_code',
         'postal code': 'pin_code',
-        'zip code': 'pin_code'
-        # Removed person_image related mappings as OpenCV handles image extraction
+        'zip code': 'pin_code',
+        'postcode': 'pin_code'
     }
     
     for line in lines:
         line = line.strip()
         if ':' in line:
+            # Handle both bullet points and regular lines
+            if line.startswith('*') or line.startswith('-'):
+                line = line[1:].strip()
+            
+            # Remove markdown bold formatting if present
+            if '**' in line:
+                # Handle format like: **field:** value
+                line = line.replace('**', '')
+            
             key, value = line.split(':', 1)
-            key = key.strip('- ').lower()
+            key = key.strip().lower()
             value = value.strip()
             
-            # Map the key to our standard field name first
+            # Map the key to our standard field name and set value if meaningful
             if key in field_mappings:
                 field_name = field_mappings[key]
                 if field_name in extracted_info:
-                    # Always set the value, even if it's "Not available" for debugging
-                    extracted_info[field_name] = value
-                    
-            # Special handling for cases where value is meaningful
-            if value and value.lower() not in ['not available', 'n/a', 'na', 'not provided', 'not visible', '', 'none']:
-                if key in field_mappings:
-                    field_name = field_mappings[key]
-                    if field_name in extracted_info:
+                    # Only set if value is meaningful (not "Not available", etc.)
+                    if value and value.lower() not in ['not available', 'n/a', 'na', 'not provided', 'not visible', 'none', '[not mentioned]', '[not available]']:
                         extracted_info[field_name] = value
     
     return extracted_info
