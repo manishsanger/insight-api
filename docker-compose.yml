@@ -67,10 +67,12 @@ services:
     environment:
       REACT_APP_API_BASE_URL: http://localhost:8650
       REACT_APP_CAR_IDENTIFIER_URL: http://localhost:8653
+      REACT_APP_DOC_READER_URL: http://localhost:8654
       NODE_ENV: production
     depends_on:
       - officer-insight-api
       - car-identifier-service
+      - doc-reader-service
     networks:
       - insight-network
     volumes:
@@ -90,6 +92,30 @@ services:
     volumes:
       - /Users/manishsanger/docker-data/speech2text-service:/app/audio_files
 
+  doc-reader-service:
+    build: ./doc-reader-service
+    container_name: insight-doc-reader
+    restart: unless-stopped
+    ports:
+      - "8654:8654"
+    environment:
+      MONGODB_URI: mongodb://admin:Apple%40123@mongodb:27017/insight_db?authSource=admin
+      OLLAMA_URL: http://host.docker.internal:11434
+      VISION_MODEL: gemma3:12b
+      MODEL_TIMEOUT: 180
+      CORS_ORIGINS: http://localhost:8651,http://localhost:3000
+      ALLOWED_EXTENSIONS: jpg,jpeg,png,gif,bmp,webp,pdf
+      MAX_CONTENT_LENGTH: 16777216
+      EXTRACTION_FIELDS: document_type,name,date_of_birth,country,date_of_issue,expiry_date,address,gender,place_of_birth,issuing_authority,nationality,pin_code,person_image
+      JWT_SECRET_KEY: your-secret-key-here
+      JWT_ACCESS_TOKEN_EXPIRES: 3600
+    depends_on:
+      - mongodb
+    networks:
+      - insight-network
+    volumes:
+      - /Users/manishsanger/docker-data/doc-reader-service:/app/data
+
 networks:
   insight-network:
     driver: bridge
@@ -100,3 +126,4 @@ volumes:
   car_identifier_data:
   admin_ui_data:
   speech2text_data:
+  doc_reader_data:

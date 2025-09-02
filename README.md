@@ -6,7 +6,7 @@ Officer Insight API is a comprehensive microservices-based system designed to as
 
 ## 🏗️ System Architecture
 
-The system consists of four main microservices:
+The system consists of five main microservices:
 
 ### 🔧 Officer Insight API (Port 8650)
 - **Purpose**: Core API service for text/audio processing and system coordination
@@ -19,6 +19,15 @@ The system consists of four main microservices:
 - **Features**: License plate recognition, vehicle make/model/color identification
 - **AI Model**: Gemma3:12b vision model for vehicle analysis
 - **Configuration**: Fully configurable extraction fields and parameters
+
+### 📄 Document Reader Service (Port 8654)
+- **Purpose**: AI-powered document parsing and information extraction from images and PDFs
+- **Features**: Identity document analysis, structured data extraction, multi-format support, optional selective extraction
+- **AI Model**: Gemma3:12b vision model for document analysis
+- **Formats**: JPG, PNG, PDF, and other image formats
+- **Optional Parameters**: 
+  - `extract_person_image`: Extract person's photo from document (default: true)
+  - `extract_text_info`: Extract text information from document (default: true)
 
 ### 🎤 Speech2Text Service (Port 8652)
 - **Purpose**: Audio processing and speech-to-text conversion
@@ -35,8 +44,10 @@ The system consists of four main microservices:
 ## ✨ Key Features
 
 ### 🎯 Core Capabilities
-- **Multi-Source Data Processing**: Text, audio, and image inputs
+- **Multi-Source Data Processing**: Text, audio, image, and document inputs
 - **AI-Powered Analysis**: Advanced machine learning models for accurate extraction
+- **Document Intelligence**: Automated parsing of identity documents, certificates, and forms
+- **Vehicle Recognition**: Comprehensive vehicle identification and analysis
 - **Structured Data Output**: Consistent JSON format for all extractions
 - **Real-time Processing**: Fast response times for immediate insights
 - **Microservices Architecture**: Scalable and maintainable design
@@ -102,6 +113,7 @@ curl http://localhost:8652/api/health         # Speech2Text
 ### Service URLs
 - **Officer Insight API**: http://localhost:8650
 - **Car Identifier Service**: http://localhost:8653
+- **Document Reader Service**: http://localhost:8654
 - **Speech2Text Service**: http://localhost:8652
 - **Admin UI**: http://localhost:8651
 - **MongoDB**: localhost:27017
@@ -109,6 +121,7 @@ curl http://localhost:8652/api/health         # Speech2Text
 ### API Documentation
 - **Officer API Docs**: http://localhost:8650/docs/
 - **Car Identifier Docs**: http://localhost:8653/docs/
+- **Document Reader Docs**: http://localhost:8654/docs/
 - **Speech2Text Docs**: http://localhost:8652/docs/
 
 ### Default Credentials
@@ -122,6 +135,28 @@ curl http://localhost:8652/api/health         # Speech2Text
 curl -X POST "http://localhost:8650/api/public/parse-message" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "message=Officer Johnson reporting traffic violation. Red Honda Civic plate ABC123 speeding in school zone."
+```
+
+### Document Processing (with optional parameters)
+```bash
+# Extract both person image and text information (default)
+curl -X POST "http://localhost:8654/api/public/doc-reader" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@path/to/document/passport.pdf"
+
+# Extract only text information
+curl -X POST "http://localhost:8654/api/public/doc-reader" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@path/to/document/passport.pdf" \
+  -F "extract_person_image=false" \
+  -F "extract_text_info=true"
+
+# Extract only person image
+curl -X POST "http://localhost:8654/api/public/doc-reader" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@path/to/document/passport.pdf" \
+  -F "extract_person_image=true" \
+  -F "extract_text_info=false"
 ```
 
 ### Vehicle Image Analysis
@@ -141,6 +176,15 @@ curl -X POST "http://localhost:8650/api/public/parse-message" \
 ## ⚙️ Configuration
 
 ### Environment Variables
+
+#### Document Reader Service
+```bash
+VISION_MODEL=gemma3:12b                    # AI model for document analysis
+EXTRACTION_FIELDS=document_type,name,date_of_birth,country,date_of_issue,expiry_date,address,gender,place_of_birth,issuing_authority,nationality,pin_code
+MODEL_TIMEOUT=180                          # Processing timeout in seconds
+ALLOWED_EXTENSIONS=jpg,jpeg,png,gif,bmp,webp,pdf
+MAX_CONTENT_LENGTH=16777216               # 16MB file size limit
+```
 
 #### Car Identifier Service
 ```bash
@@ -180,6 +224,20 @@ The system supports configurable extraction fields:
 - `vehicle_year` - Year estimation
 - `vehicle_condition` - Condition assessment
 
+**Document Analysis Fields:**
+- `document_type` - Type identification (passport, license, ID)
+- `name` - Full name extraction
+- `date_of_birth` - Birth date recognition
+- `country` - Country information
+- `date_of_issue` - Issue date extraction
+- `expiry_date` - Expiration date recognition
+- `address` - Address information
+- `gender` - Gender identification
+- `place_of_birth` - Birth place extraction
+- `issuing_authority` - Authority information
+- `nationality` - Nationality extraction
+- `pin_code` - Postal/ZIP code recognition
+
 ## 🔧 Development
 
 ### Local Development Setup
@@ -200,6 +258,9 @@ cp .env.example .env
 
 3. **Run individual services:**
 ```bash
+# Document Reader Service
+cd doc-reader-service && python app.py
+
 # Car Identifier Service
 cd car-identifier-service && python app.py
 
@@ -217,6 +278,7 @@ cd speech2text-service && python app.py
 python test_deployment.py
 
 # Test specific endpoints
+curl http://localhost:8654/api/public/health
 curl http://localhost:8653/api/public/health
 curl http://localhost:8650/api/public/health
 curl http://localhost:8652/api/health
@@ -227,6 +289,7 @@ curl http://localhost:8652/api/health
 ### Service Health Endpoints
 - Officer API: `GET /api/public/health`
 - Car Identifier: `GET /api/public/health`
+- Document Reader: `GET /api/public/health`
 - Speech2Text: `GET /api/health`
 
 ### Logging
@@ -241,7 +304,7 @@ curl http://localhost:8652/api/health
 - Query performance metrics
 - Storage utilization
 
-## 🔒 Security Features
+## 🔒 Security Features & Best Practices
 
 - **Authentication**: JWT-based token authentication
 - **Authorization**: Role-based access control
@@ -249,6 +312,42 @@ curl http://localhost:8652/api/health
 - **CORS Protection**: Configurable cross-origin policies
 - **Error Handling**: Secure error messages without information leakage
 - **Rate Limiting**: Protection against abuse (configurable)
+- **Data Privacy**: 
+  - No sensitive user data logged
+  - Automatic exclusion of personal documents from git repository
+  - Secure handling of extracted personal information
+  - Configurable data retention policies
+
+### 🚨 Security Guidelines
+
+⚠️ **IMPORTANT**: This system processes sensitive personal information including:
+- Identity documents (passports, driver's licenses)
+- Personal photos extracted from documents
+- Vehicle registration information
+- Audio recordings containing personal data
+
+**Best Practices:**
+1. **Never commit test files containing real personal data**
+2. **Use anonymized/synthetic test data for development**
+3. **Run security check before committing**: `./scripts/security-check.sh`
+4. **Implement proper data retention and deletion policies**
+5. **Ensure secure transmission (HTTPS) in production**
+6. **Regular security audits and vulnerability assessments**
+7. **Proper access controls and user authentication**
+
+### 🔍 Pre-Commit Security Check
+
+Before committing any changes, run the security check script:
+
+```bash
+./scripts/security-check.sh
+```
+
+This script will:
+- Check for personal document images
+- Scan for potential real personal data patterns
+- Identify large image files that might be real documents
+- Warn about files that need review
 
 ## 📈 Performance Optimization
 
@@ -276,6 +375,7 @@ curl http://localhost:8652/api/health
 
 - [API Documentation](./API_DOCUMENTATION.md) - Detailed API reference
 - [Car Identifier Service](./car-identifier-service/README.md) - Vehicle analysis service guide
+- [Document Reader Service](./doc-reader-service/README.md) - Document parsing service guide
 - [Deployment Guide](./DEPLOYMENT.md) - Production deployment instructions
 - [Postman Testing](./POSTMAN_TESTING_GUIDE.md) - API testing with Postman
 - [Changelog](./CHANGELOG.md) - Version history and updates

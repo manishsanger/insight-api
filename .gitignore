@@ -205,3 +205,26 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Sensitive files - Do not commit real personal documents
+passport-*.jpeg
+passport-*.jpg
+passport-*.png
+license-*.jpeg
+license-*.jpg
+license-*.png
+id_card-*.jpeg
+id_card-*.jpg
+id_card-*.png
+real_*.jpeg
+real_*.jpg
+real_*.png
+personal_*.jpeg
+personal_*.jpg
+personal_*.png
+
+# Data directories (but allow test-data and sample-data)
+/data/
+/uploads/
+/persistent_storage/
+/user_uploads/

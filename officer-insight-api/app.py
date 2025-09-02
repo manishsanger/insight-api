@@ -63,10 +63,6 @@ def custom_output_json(data, code, headers=None):
     """Custom JSON output that handles MongoDB ObjectId and datetime"""
     import json
     
-    print(f"=== Custom JSON output called ===")
-    print(f"Data type: {type(data)}")
-    print(f"Data: {data}")
-    
     try:
         # Serialize the data first to handle ObjectId and datetime
         serialized_data = serialize_mongo_doc(data)
@@ -79,17 +75,12 @@ def custom_output_json(data, code, headers=None):
             resp.headers.extend(headers)
         return resp
     except Exception as e:
-        print(f"Error in custom_output_json: {e}")
-        import traceback
-        traceback.print_exc()
         # Fallback to default JSON handling
         fallback = json.dumps({'error': 'Serialization error'}) + '\n'
         return current_app.response_class(fallback, status=500, mimetype='application/json')
 
 # Override the default JSON representation
-print("=== Setting custom JSON representation ===")
 api.representations['application/json'] = custom_output_json
-print(f"Current representations: {api.representations}")
 
 # Configure Flask app to use our custom JSON encoder for responses
 app.json_encoder = CustomJSONEncoder
@@ -144,16 +135,14 @@ def init_database():
                 'role': 'admin',
                 'created_at': datetime.utcnow()
             })
-            print("Default admin user created")
 
         # Create default parameters
         params_count = mongo.db.parameters.count_documents({})
         if params_count == 0:
             mongo.db.parameters.insert_many(DEFAULT_PARAMETERS)
-            print("Default parameters created")
 
     except Exception as e:
-        print(f"Database initialization error: {e}")
+        pass
 
 def extract_information_with_ollama(text, parameters):
     """Extract information using Ollama AI"""
@@ -223,11 +212,9 @@ Do not include any additional explanations or text.
             
             return extracted_data
         else:
-            print(f"Ollama API error: {response.status_code}")
             return extract_information_with_regex(text, parameters)
             
     except Exception as e:
-        print(f"Ollama extraction error: {e}")
         return extract_information_with_regex(text, parameters)
 
 def extract_information_with_regex(text, parameters):
@@ -314,25 +301,20 @@ def extract_information_with_regex(text, parameters):
 
 def speechToText(audio_file):
     """
-    Convert audio file to text using Speech2Text service
+    Convert audio file to text using speech2text service
     
     Args:
-        audio_file: Flask FileStorage object containing the audio file
+        audio_file: File object containing audio data
         
     Returns:
         str: Transcribed text from audio, or None if conversion fails
     """
     try:
-        print(f"=== speechToText method called ===", flush=True)
-        print(f"Speech2Text URL: {app.config['SPEECH2TEXT_API_URL']}", flush=True)
-        print(f"Audio file: {audio_file.filename} ({audio_file.content_type})", flush=True)
-        
         # Test connectivity first
         try:
             health_response = requests.get(f"{app.config['SPEECH2TEXT_API_URL']}/api/health", timeout=5)
-            print(f"Health check response: {health_response.status_code}", flush=True)
         except Exception as health_error:
-            print(f"Health check failed: {health_error}", flush=True)
+            pass
         
         # Prepare file for forwarding
         audio_file.seek(0)
@@ -344,9 +326,6 @@ def speechToText(audio_file):
         }
         headers = {'Authorization': f'Bearer {app.config["SPEECH2TEXT_API_TOKEN"]}'}
         
-        print(f"Making request to: {app.config['SPEECH2TEXT_API_URL']}/api/convert", flush=True)
-        print(f"File size: {len(file_content)} bytes", flush=True)
-        
         response = requests.post(
             f"{app.config['SPEECH2TEXT_API_URL']}/api/convert",
             files=files,
@@ -354,22 +333,14 @@ def speechToText(audio_file):
             timeout=120
         )
         
-        print(f"Response status: {response.status_code}", flush=True)
-        
         if response.status_code == 200:
             result = response.json()
             transcribed_text = result.get('text', '')
-            print(f"Speech-to-text successful. Text length: {len(transcribed_text)}", flush=True)
             return transcribed_text
         else:
-            print(f"Speech2Text API error: {response.status_code}", flush=True)
-            print(f"Response content: {response.text}", flush=True)
             return None
             
     except Exception as e:
-        print(f"speechToText error: {e}", flush=True)
-        import traceback
-        traceback.print_exc()
         return None
 
 def process_text_with_ollama_service(text):

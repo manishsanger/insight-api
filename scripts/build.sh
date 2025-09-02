@@ -75,6 +75,16 @@ else
     exit 1
 fi
 
+# Build doc-reader-service
+print_status "Building doc-reader-service..."
+docker build -t doc-reader-service:latest ./doc-reader-service
+if [ $? -eq 0 ]; then
+    print_success "doc-reader-service built successfully"
+else
+    print_error "Failed to build doc-reader-service"
+    exit 1
+fi
+
 # Build admin-ui
 print_status "Building admin-ui..."
 docker build -t admin-ui:latest ./admin-ui
@@ -99,20 +109,23 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo
         print_status "Service URLs:"
         echo "  🔧 Officer Insight API: http://localhost:8650"
-        echo "  � Car Identifier Service: http://localhost:8653"
+        echo "  🚗 Car Identifier Service: http://localhost:8653"
         echo "  🎤 Speech2Text Service: http://localhost:8652"
-        echo "  🖥️  Admin UI: http://localhost:8651"
+        echo "  � Document Reader Service: http://localhost:8654"
+        echo "  �🖥️  Admin UI: http://localhost:8651"
         echo "  📊 MongoDB: localhost:27017"
         echo
         print_status "API Documentation:"
         echo "  📚 Officer API Docs: http://localhost:8650/docs/"
         echo "  📚 Car Identifier Docs: http://localhost:8653/docs/"
         echo "  📚 Speech2Text Docs: http://localhost:8652/docs/"
+        echo "  📚 Document Reader Docs: http://localhost:8654/docs/"
         echo
         print_status "Health Checks:"
         echo "  ❤️  Officer API Health: http://localhost:8650/api/public/health"
         echo "  ❤️  Car Identifier Health: http://localhost:8653/api/public/health"
         echo "  ❤️  Speech2Text Health: http://localhost:8652/api/health"
+        echo "  ❤️  Document Reader Health: http://localhost:8654/api/public/health"
     else
         print_error "Failed to start services"
         exit 1
