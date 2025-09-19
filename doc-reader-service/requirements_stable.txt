@@ -10,5 +10,5 @@ PyJWT==2.8.0
 pymongo==4.5.0
 PyMuPDF==1.23.3
 pdf2image==1.16.3
-opencv-python-headless==4.8.0.76
+opencv-python-headless==4.8.1.78
 numpy==1.24.3
