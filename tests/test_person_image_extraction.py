@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script for Document Reader Service with Person Image Extraction
+Test script for Document Reader Service with Person Image Extraction and JWT authentication
 """
 
 import requests
@@ -9,6 +9,20 @@ import time
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 import base64
+
+def get_auth_token():
+    """Get JWT authentication token"""
+    try:
+        response = requests.post("http://localhost:8650/api/auth/login", 
+                               json={"username": "admin", "password": "Apple@123"})
+        if response.status_code == 200:
+            return response.json().get('access_token')
+        else:
+            print(f"❌ Authentication failed: {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"❌ Authentication error: {e}")
+        return None
 
 def create_mock_id_card():
     """Create a mock ID card with a person's photo for testing"""
@@ -63,7 +77,7 @@ def create_mock_id_card():
     
     return img_bytes
 
-def test_document_with_person_image():
+def test_document_with_person_image(token):
     """Test document processing with person image extraction"""
     print("\n🔍 Testing document processing with person image extraction...")
     try:
@@ -75,10 +89,14 @@ def test_document_with_person_image():
             'file': ('mock_id_card.png', test_id_card, 'image/png')
         }
         
-        print("   Sending mock ID card to /api/public/doc-reader...")
+        print("   Sending mock ID card to /api/doc-reader...")
+        
+        headers = {"Authorization": f"Bearer {token}"}
+        
         response = requests.post(
-            "http://localhost:8654/api/public/doc-reader", 
+            "http://localhost:8654/api/doc-reader", 
             files=files,
+            headers=headers,
             timeout=60  # Increase timeout for AI processing
         )
         
@@ -156,17 +174,27 @@ def main():
     print("⏳ Waiting for service to be ready...")
     time.sleep(3)
     
+    # Get authentication token
+    print("🔐 Getting authentication token...")
+    token = get_auth_token()
+    if not token:
+        print("❌ Cannot proceed without authentication token")
+        return
+    
     tests = [
-        test_document_with_person_image,
-        test_mongodb_storage
+        (test_document_with_person_image, [token]),
+        (test_mongodb_storage, [])
     ]
     
     passed = 0
     total = len(tests)
     
-    for test in tests:
-        if test():
-            passed += 1
+    for test_func, args in tests:
+        try:
+            if test_func(*args):
+                passed += 1
+        except Exception as e:
+            print(f"❌ Test {test_func.__name__} failed with error: {e}")
     
     print("\n" + "=" * 70)
     print(f"📊 Test Results: {passed}/{total} tests passed")

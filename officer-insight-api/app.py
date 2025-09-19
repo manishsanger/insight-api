@@ -66,7 +66,7 @@ CORS(app, origins=['http://localhost:8651', 'http://localhost:3000'], supports_c
 # API Documentation
 api = Api(app, version='1.0', title='Officer Insight API',
           description='API for processing audio files and text messages',
-          doc='/docs/', prefix='/api')
+          doc='/docs/')
 
 # Override Flask-RESTX JSON output to use our custom JSON serialization
 def custom_output_json(data, code, headers=None):
@@ -98,11 +98,13 @@ app.json_encoder = CustomJSONEncoder
 # Namespaces
 auth_ns = Namespace('auth', description='Authentication operations')
 admin_ns = Namespace('admin', description='Admin operations')
-public_ns = Namespace('public', description='Public API operations')
+public_ns = Namespace('public', description='Public API operations (health only)')
+api_ns = Namespace('api', description='Secured API operations')  # Changed back to 'api'
 
-api.add_namespace(auth_ns, path='/auth')
-api.add_namespace(admin_ns, path='/admin')
-api.add_namespace(public_ns, path='/public')
+api.add_namespace(auth_ns, path='/api/auth')
+api.add_namespace(admin_ns, path='/api/admin')
+api.add_namespace(public_ns, path='/api/public')
+api.add_namespace(api_ns, path='/api')  # This will create /api/parse-message
 
 # Add new namespaces for the new modules
 api.add_namespace(images_ns, path='/images')
@@ -722,9 +724,10 @@ class Dashboard(Resource):
         }, 200
 
 # Public API endpoints
-@public_ns.route('/parse-message')
+@api_ns.route('/parse-message')
 class ParseMessage(Resource):
-    @public_ns.expect(message_model)
+    @api_ns.expect(message_model)
+    @jwt_required()
     def post(self):
         """Parse text message or audio file and extract information"""
         try:

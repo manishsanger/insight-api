@@ -89,11 +89,11 @@ pm.test("Response contains role", function () {
 }
 ```
 
-## 🌍 Public API Tests (No Authentication Required)
+## 🌍 Health Check Tests (No Authentication Required)
 
 ### Test 2: Officer Insight API Health Check
 
-**Endpoint:** `GET {{officer_api_base_url}}/api/public/health`
+**Endpoint:** `GET {{officer_api_base_url}}/api/health`
 
 **Headers:** None required
 
@@ -116,7 +116,7 @@ pm.test("Services status included", function () {
 
 ### Test 3: Car Identifier Service Health Check
 
-**Endpoint:** `GET {{car_identifier_base_url}}/api/public/health`
+**Endpoint:** `GET {{car_identifier_base_url}}/api/health`
 
 **Headers:** None required
 
@@ -139,13 +139,48 @@ pm.test("Model configuration included", function () {
 });
 ```
 
-### Test 4: Parse Text Message
+## 🔐 Authentication Tests
 
-**Endpoint:** `POST {{officer_api_base_url}}/api/public/parse-message`
+### Test 4: Admin Login
+
+**Endpoint:** `POST {{officer_api_base_url}}/api/auth/login`
+
+**Headers:**
+```
+Content-Type: application/json
+```
+
+**Body (JSON):**
+```json
+{
+    "username": "admin",
+    "password": "Apple@123"
+}
+```
+
+**Test Script:**
+```javascript
+pm.test("Login successful", function () {
+    pm.response.to.have.status(200);
+    const responseJson = pm.response.json();
+    pm.expect(responseJson).to.have.property('access_token');
+    pm.expect(responseJson).to.have.property('role');
+    
+    // Store token for subsequent requests
+    pm.environment.set("admin_token", responseJson.access_token);
+});
+```
+
+## 🔒 Authenticated API Tests (JWT Token Required)
+
+### Test 5: Parse Text Message
+
+**Endpoint:** `POST {{officer_api_base_url}}/api/parse-message`
 
 **Headers:**
 ```
 Content-Type: application/x-www-form-urlencoded
+Authorization: Bearer {{admin_token}}
 ```
 
 **Body (x-www-form-urlencoded):**
@@ -178,13 +213,14 @@ pm.test("Driver information extracted", function () {
 });
 ```
 
-### Test 5: Parse Audio Message
+### Test 6: Parse Audio Message
 
-**Endpoint:** `POST {{officer_api_base_url}}/api/public/parse-message`
+**Endpoint:** `POST {{officer_api_base_url}}/api/parse-message`
 
 **Headers:**
 ```
 Content-Type: multipart/form-data
+Authorization: Bearer {{admin_token}}
 ```
 
 **Body (form-data):**
@@ -207,13 +243,14 @@ pm.test("Response time is acceptable", function () {
 });
 ```
 
-### Test 6: Vehicle Image Identification (Car Identifier Service)
+### Test 7: Vehicle Image Identification (Car Identifier Service)
 
-**Endpoint:** `POST {{car_identifier_base_url}}/api/public/car-identifier`
+**Endpoint:** `POST {{car_identifier_base_url}}/api/car-identifier`
 
 **Headers:**
 ```
 Content-Type: multipart/form-data
+Authorization: Bearer {{admin_token}}
 ```
 
 **Body (form-data):**
@@ -468,11 +505,12 @@ pm.test("Invalid token rejected", function () {
 
 ### Test 16: Missing Required Field
 
-**Endpoint:** `POST {{car_identifier_base_url}}/api/public/car-identifier`
+**Endpoint:** `POST {{car_identifier_base_url}}/api/car-identifier`
 
 **Headers:**
 ```
 Content-Type: multipart/form-data
+Authorization: Bearer {{admin_token}}
 ```
 
 **Body:** Empty (no image file)
@@ -568,7 +606,7 @@ newman run officer-insight-api-system-tests.json -e officer-insight-api-system-e
 
 1. **Connection Refused**
    - Ensure all services are running: `docker-compose ps`
-   - Check ports are accessible: `curl http://localhost:8650/api/public/health`
+   - Check ports are accessible: `curl http://localhost:8650/api/health`
 
 2. **Authentication Errors**
    - Verify JWT token is valid and not expired
@@ -593,8 +631,10 @@ docker logs insight-api-speech2text-service-1
 docker logs insight-api-admin-ui-1
 
 # Check service health
-curl http://localhost:8650/api/public/health
-curl http://localhost:8653/api/public/health
+curl http://localhost:8650/api/health
+curl http://localhost:8653/api/health
+curl http://localhost:8654/api/health
+curl http://localhost:8652/api/health
 curl http://localhost:8652/api/health
 curl http://localhost:8651/health
 ```

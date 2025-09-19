@@ -5,7 +5,8 @@ import requests
 from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_restx import Api, Resource, fields
+from flask_restx import Api, Resource, fields, Namespace
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 import tempfile
 import shutil
@@ -21,6 +22,10 @@ app.config['AUDIO_UPLOAD_FOLDER'] = '/app/audio_files'
 app.config['TEMP_FOLDER'] = '/app/temp'
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 
+# JWT Configuration
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-here')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False  # Tokens don't expire (optional)
+
 # Enable debug logging
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -29,10 +34,19 @@ app.logger.setLevel(logging.DEBUG)
 # Initialize extensions
 CORS(app)
 
+# Initialize JWT
+jwt = JWTManager(app)
+
 # API Documentation
 api = Api(app, version='1.0', title='Ollama Text and Audio Processing Service',
           description='Text and audio processing service using Ollama AI',
           doc='/docs/')
+
+# Namespaces
+public_ns = Namespace('public', description='Public operations (health only)')
+api_ns = Namespace('api', description='Authenticated API operations')
+api.add_namespace(public_ns, path='/api/public')
+api.add_namespace(api_ns, path='/api')
 
 print(f"Using Ollama at: {app.config['OLLAMA_URL']}")
 print(f"Using Ollama model: {app.config['OLLAMA_MODEL']}")
@@ -324,9 +338,10 @@ success_model = api.model('Success', {
     'timestamp': fields.String(description='Processing timestamp')
 })
 
-@api.route('/api/convert')
+@api_ns.route('/convert')
 class ConvertAudio(Resource):
-    @api.expect(convert_model)
+    @jwt_required()
+    @api_ns.expect(convert_model)
     def post(self):
         """Convert audio file to text only (no Ollama processing)"""
         app.logger.debug("=== CONVERT ENDPOINT CALLED ===")
@@ -456,9 +471,10 @@ class ConvertAudio(Resource):
             print(f"Error processing request: {str(e)}")
             return {'message': f'Error processing request: {str(e)}'}, 500
 
-@api.route('/api/process-text')
+@api_ns.route('/process-text')
 class ProcessText(Resource):
-    @api.expect(process_text_model)
+    @jwt_required()
+    @api_ns.expect(process_text_model)
     def post(self):
         """Process text message using Ollama AI for structured information extraction"""
         # Verify authentication
@@ -496,7 +512,7 @@ class ProcessText(Resource):
             print(f"Error processing text: {str(e)}")
             return {'message': f'Error processing text: {str(e)}'}, 500
 
-@api.route('/api/health')
+@public_ns.route('/health')
 class Health(Resource):
     def get(self):
         """Health check endpoint"""
@@ -569,8 +585,9 @@ class Health(Resource):
                 'error': str(e)
             }, 500
 
-@api.route('/api/files')
+@api_ns.route('/files')
 class FileList(Resource):
+    @jwt_required()
     def get(self):
         """List stored audio files (for debugging/monitoring)"""
         # Verify authentication

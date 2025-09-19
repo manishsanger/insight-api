@@ -12,8 +12,8 @@
       "type": "string"
     },
     {
-      "key": "api_token",
-      "value": "insight_speech_token_2024",
+      "key": "admin_token",
+      "value": "",
       "type": "string"
     }
   ],
@@ -34,13 +34,60 @@
       }
     },
     {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login (Get JWT Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has access_token\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.access_token).to.exist;",
+                  "    pm.collectionVariables.set(\"admin_token\", jsonData.access_token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n    \"username\": \"admin\",\\n    \"password\": \"Apple@123\"\\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8650/api/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8650",
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Convert Audio to Text",
       "request": {
         "method": "POST",
         "header": [
           {
-            "key": "X-API-Token",
-            "value": "{{api_token}}"
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
           }
         ],
         "body": {

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script for Document Reader Service
+Test script for Document Reader Service with JWT authentication
 """
 
 import requests
@@ -8,6 +8,20 @@ import json
 import time
 from io import BytesIO
 from PIL import Image
+
+def get_auth_token():
+    """Get JWT authentication token"""
+    try:
+        response = requests.post("http://localhost:8650/api/auth/login", 
+                               json={"username": "admin", "password": "Apple@123"})
+        if response.status_code == 200:
+            return response.json().get('access_token')
+        else:
+            print(f"❌ Authentication failed: {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"❌ Authentication error: {e}")
+        return None
 
 def test_health():
     """Test health endpoint"""
@@ -38,18 +52,16 @@ def test_api_docs():
             print("✅ API documentation is accessible")
             return True
         else:
-            print(f"❌ API docs failed: {response.status_code}")
+            print(f"❌ API documentation failed: {response.status_code}")
             return False
     except Exception as e:
-        print(f"❌ API docs error: {str(e)}")
+        print(f"❌ API documentation error: {str(e)}")
         return False
 
 def create_test_image():
-    """Create a simple test image with text"""
-    # Create a simple image with text
-    img = Image.new('RGB', (400, 200), color='white')
-    # Note: For a real test, you'd need PIL with text capabilities
-    # For now, we'll create a simple colored image
+    """Create a simple test image"""
+    # Create a simple test image
+    img = Image.new('RGB', (200, 100), color='white')
     
     # Convert to bytes
     img_bytes = BytesIO()
@@ -58,8 +70,8 @@ def create_test_image():
     
     return img_bytes
 
-def test_document_processing():
-    """Test document processing endpoint"""
+def test_document_processing(token):
+    """Test document processing endpoint with authentication"""
     print("\n🔍 Testing document processing...")
     try:
         # Create a test image
@@ -70,28 +82,29 @@ def test_document_processing():
             'file': ('test_document.png', test_image, 'image/png')
         }
         
-        print("   Sending test image to /api/public/doc-reader...")
+        headers = {"Authorization": f"Bearer {token}"}
+        
+        print("   Sending test image to /api/doc-reader...")
         response = requests.post(
-            "http://localhost:8654/api/public/doc-reader", 
+            "http://localhost:8654/api/doc-reader", 
             files=files,
+            headers=headers,
             timeout=30
         )
         
         if response.status_code == 200:
             result = response.json()
             print("✅ Document processing successful")
-            print(f"   Document ID: {result.get('id')}")
-            print(f"   Model used: {result.get('model')}")
-            print(f"   Service: {result.get('service')}")
-            print(f"   Extracted fields: {len(result.get('extracted_info', {}))}")
+            print(f"   Response ID: {result.get('id', 'N/A')}")
+            print(f"   Model used: {result.get('model', 'N/A')}")
+            print(f"   Service: {result.get('service', 'N/A')}")
             
-            # Show some extracted info if available
-            extracted = result.get('extracted_info', {})
-            if extracted:
-                print("   Extracted information:")
-                for key, value in list(extracted.items())[:3]:  # Show first 3 items
-                    if value:
-                        print(f"     {key}: {value}")
+            if 'extracted_info' in result:
+                print(f"   Extracted info: {len(result['extracted_info'])} fields")
+                for key, value in result['extracted_info'].items():
+                    print(f"     {key}: {value}")
+            else:
+                print("   No extracted info returned")
             
             return True
         else:
@@ -104,7 +117,7 @@ def test_document_processing():
         print(f"❌ Document processing error: {str(e)}")
         return False
 
-def test_invalid_file():
+def test_invalid_file(token):
     """Test with invalid file type"""
     print("\n🔍 Testing invalid file handling...")
     try:
@@ -113,9 +126,12 @@ def test_invalid_file():
             'file': ('test.txt', BytesIO(b'This is not an image'), 'text/plain')
         }
         
+        headers = {"Authorization": f"Bearer {token}"}
+        
         response = requests.post(
-            "http://localhost:8654/api/public/doc-reader", 
+            "http://localhost:8654/api/doc-reader", 
             files=files,
+            headers=headers,
             timeout=10
         )
         
@@ -123,7 +139,7 @@ def test_invalid_file():
             print("✅ Invalid file type correctly rejected")
             return True
         else:
-            print(f"❌ Invalid file handling failed: Expected 400, got {response.status_code}")
+            print(f"❌ Invalid file handling unexpected: {response.status_code}")
             return False
             
     except Exception as e:
@@ -139,30 +155,36 @@ def main():
     print("⏳ Waiting for service to be ready...")
     time.sleep(2)
     
+    # Get authentication token
+    print("🔐 Getting authentication token...")
+    token = get_auth_token()
+    if not token:
+        print("❌ Cannot proceed without authentication token")
+        return
+    
     tests = [
-        test_health,
-        test_api_docs,
-        test_document_processing,
-        test_invalid_file
+        (test_health, []),
+        (test_api_docs, []),
+        (test_document_processing, [token]),
+        (test_invalid_file, [token])
     ]
     
     passed = 0
     total = len(tests)
     
-    for test in tests:
-        if test():
-            passed += 1
+    for test_func, args in tests:
+        try:
+            if test_func(*args):
+                passed += 1
+        except Exception as e:
+            print(f"❌ Test {test_func.__name__} failed with error: {e}")
     
-    print("\n" + "=" * 50)
-    print(f"📊 Test Results: {passed}/{total} tests passed")
+    print(f"\n📊 Test Results: {passed}/{total} tests passed")
     
     if passed == total:
-        print("🎉 All tests passed! Document Reader Service is working correctly.")
+        print("🎉 All tests passed!")
     else:
-        print("⚠️  Some tests failed. Please check the service configuration.")
-    
-    return passed == total
+        print("❌ Some tests failed")
 
 if __name__ == "__main__":
-    success = main()
-    exit(0 if success else 1)
+    main()

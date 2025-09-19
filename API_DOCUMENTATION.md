@@ -573,7 +573,7 @@ Import the provided Postman collection for comprehensive API testing:
 ### Automated Testing
 ```bash
 # Run comprehensive tests
-python test_deployment.py
+python tests/test_deployment.py
 
 # Test individual services
 curl http://localhost:8650/api/public/health

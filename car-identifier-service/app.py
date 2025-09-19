@@ -6,6 +6,7 @@ from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 from flask_cors import CORS
 from flask_restx import Api, Resource, fields, Namespace
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 import json
 from bson import ObjectId
@@ -48,6 +49,13 @@ app.config['MODEL_TIMEOUT'] = int(os.getenv('MODEL_TIMEOUT', '180'))
 app.config['ALLOWED_EXTENSIONS'] = set(os.getenv('ALLOWED_EXTENSIONS', 'jpg,jpeg,png,gif,bmp,webp').split(','))
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', str(16 * 1024 * 1024)))  # 16MB default
 
+# JWT Configuration
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-here')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False  # Tokens don't expire (optional)
+
+# Initialize JWT
+jwt = JWTManager(app)
+
 # Configurable extraction parameters
 DEFAULT_EXTRACTION_FIELDS = [
     'vehicle_registration',
@@ -65,7 +73,7 @@ CORS(app, origins=os.getenv('CORS_ORIGINS', 'http://localhost:8651,http://localh
 # API Documentation
 api = Api(app, version='1.0', title='Car Identifier Service API',
           description='AI-powered vehicle identification service using computer vision',
-          doc='/docs/', prefix='/api')
+          doc='/docs/')
 
 # Override Flask-RESTX JSON output to use our custom JSON serialization
 def custom_output_json(data, code, headers=None):
@@ -92,9 +100,13 @@ def custom_output_json(data, code, headers=None):
 # Override the default JSON representation
 api.representations['application/json'] = custom_output_json
 
-# Namespace
-public_ns = Namespace('public', description='Public Car Identifier API operations')
-api.add_namespace(public_ns, path='/public')
+# Namespaces
+public_ns = Namespace('public', description='Public API operations (health only)')
+api.add_namespace(public_ns, path='/api/public')
+
+# Secured namespace for authenticated endpoints
+api_ns = Namespace('api', description='Authenticated API operations')
+api.add_namespace(api_ns, path='/api')
 
 # Models for Swagger documentation
 car_image_model = api.model('CarImage', {
@@ -240,10 +252,11 @@ def validate_file_extension(filename):
     extension = filename.rsplit('.', 1)[1].lower()
     return extension in app.config['ALLOWED_EXTENSIONS']
 
-# Public API endpoints
-@public_ns.route('/car-identifier')
+# Secured API endpoints (require authentication)
+@api_ns.route('/car-identifier')
 class CarIdentifier(Resource):
-    @public_ns.expect(car_image_model)
+    @jwt_required()
+    @api_ns.expect(car_image_model)
     def post(self):
         """Identify vehicle information from image using AI vision model"""
         try:

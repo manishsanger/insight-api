@@ -61,10 +61,11 @@ The system consists of five main microservices:
 - **Microservices Architecture**: Scalable and maintainable design
 
 ### 🔒 Security & Authentication
-- JWT-based authentication system
+- JWT-based authentication system with Bearer tokens
 - Role-based access control (Admin/User)
-- Secure API endpoints with CORS protection
-- Input validation and sanitization
+- All endpoints secured except health and auth endpoints
+- CORS protection and input validation
+- Secure API access with JWT token validation
 
 ### 📊 Data Management
 - MongoDB integration for persistent storage
@@ -113,9 +114,11 @@ chmod +x scripts/build.sh
 4. **Verify deployment:**
 ```bash
 # Check service health
-curl http://localhost:8650/api/public/health  # Officer API
-curl http://localhost:8653/api/public/health  # Car Identifier
-curl http://localhost:8652/api/health         # Speech2Text
+# Test all services are running
+curl http://localhost:8650/api/public/health     # Officer API
+curl http://localhost:8653/api/public/health     # Car Identifier
+curl http://localhost:8654/api/public/health     # Document Reader
+curl http://localhost:8652/api/public/health     # Speech2Text
 ```
 
 ### ⚠️ Important: Persistent Storage Configuration
@@ -153,30 +156,47 @@ All services use the **global docker-data directory** for persistent storage:
 
 ## 📋 API Usage Examples
 
+### Authentication Flow
+All endpoints (except `/health` and `/auth`) require JWT Bearer token authentication.
+
+1. **Login to get JWT token**:
+```bash
+curl -X POST "http://localhost:8650/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "Apple@123"}'
+```
+
+2. **Use the token in subsequent requests**:
+```bash
+# Replace YOUR_JWT_TOKEN with the token from login response
+export TOKEN="YOUR_JWT_TOKEN"
+```
+
 ### Text Processing
 ```bash
-curl -X POST "http://localhost:8650/api/public/parse-message" \
+curl -X POST "http://localhost:8650/api/parse-message" \
   -H "Content-Type: application/x-www-form-urlencoded" \
+  -H "Authorization: Bearer $TOKEN" \
   -d "message=Officer Johnson reporting traffic violation. Red Honda Civic plate ABC123 speeding in school zone."
 ```
 
 ### Document Processing (with optional parameters)
 ```bash
 # Extract both person image and text information (default)
-curl -X POST "http://localhost:8654/api/public/doc-reader" \
-  -H "Content-Type: multipart/form-data" \
+curl -X POST "http://localhost:8654/api/doc-reader" \
+  -H "Authorization: Bearer $TOKEN" \
   -F "file=@path/to/document/passport.pdf"
 
 # Extract only text information
-curl -X POST "http://localhost:8654/api/public/doc-reader" \
-  -H "Content-Type: multipart/form-data" \
+curl -X POST "http://localhost:8654/api/doc-reader" \
+  -H "Authorization: Bearer $TOKEN" \
   -F "file=@path/to/document/passport.pdf" \
   -F "extract_person_image=false" \
   -F "extract_text_info=true"
 
 # Extract only person image
-curl -X POST "http://localhost:8654/api/public/doc-reader" \
-  -H "Content-Type: multipart/form-data" \
+curl -X POST "http://localhost:8654/api/doc-reader" \
+  -H "Authorization: Bearer $TOKEN" \
   -F "file=@path/to/document/passport.pdf" \
   -F "extract_person_image=true" \
   -F "extract_text_info=false"
@@ -184,15 +204,15 @@ curl -X POST "http://localhost:8654/api/public/doc-reader" \
 
 ### Vehicle Image Analysis
 ```bash
-curl -X POST "http://localhost:8653/api/public/car-identifier" \
-  -H "Content-Type: multipart/form-data" \
+curl -X POST "http://localhost:8653/api/car-identifier" \
+  -H "Authorization: Bearer $TOKEN" \
   -F "image=@path/to/vehicle/image.jpg"
 ```
 
 ### Audio Processing
 ```bash
-curl -X POST "http://localhost:8650/api/public/parse-message" \
-  -H "Content-Type: multipart/form-data" \
+curl -X POST "http://localhost:8650/api/parse-message" \
+  -H "Authorization: Bearer $TOKEN" \
   -F "audio_message=@path/to/audio/report.wav"
 ```
 
@@ -232,7 +252,7 @@ IMAGES_MAX_FILE_SIZE=16777216              # Maximum file size in bytes (16MB)
 
 #### Speech2Text Service
 ```bash
-API_TOKEN=insight_speech_token_2024        # Authentication token
+JWT_SECRET_KEY=your-secret-key             # JWT token secret
 WHISPER_MODEL=base                         # Whisper model size
 ```
 
@@ -391,13 +411,13 @@ cd speech2text-service && python app.py
 #### Automated Testing
 ```bash
 # Test all services
-python test_deployment.py
+python tests/test_deployment.py
 
 # Test specific endpoints
 curl http://localhost:8654/api/public/health
 curl http://localhost:8653/api/public/health
 curl http://localhost:8650/api/public/health
-curl http://localhost:8652/api/health
+curl http://localhost:8652/api/public/health
 ```
 
 #### API Testing with Postman Collections
@@ -428,7 +448,7 @@ See [Postman Collections Guide](./postman/README.md) for detailed instructions.
 - Officer API: `GET /api/public/health`
 - Car Identifier: `GET /api/public/health`
 - Document Reader: `GET /api/public/health`
-- Speech2Text: `GET /api/health`
+- Speech2Text: `GET /api/public/health`
 
 ### Logging
 - Request/response logging
@@ -444,7 +464,11 @@ See [Postman Collections Guide](./postman/README.md) for detailed instructions.
 
 ## 🔒 Security Features & Best Practices
 
-- **Authentication**: JWT-based token authentication
+- **Authentication**: JWT Bearer token authentication for all endpoints
+- **Authorization**: Role-based access control (Admin/User roles)
+- **Public Endpoints**: Only `/health` and `/auth` endpoints are publicly accessible
+- **Token Validation**: All API requests require valid JWT tokens
+- **Secure Headers**: CORS protection and input validation
 - **Authorization**: Role-based access control
 - **Input Validation**: File type and size restrictions
 - **CORS Protection**: Configurable cross-origin policies

@@ -668,9 +668,9 @@
               "raw": "{\n    \"message\": \"I saw a blue Toyota Camry with license plate ABC123 speeding on Main Street. The driver was a young male in his 20s.\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/public/parse-message",
+              "raw": "{{base_url}}/parse-message",
               "host": ["{{base_url}}"],
-              "path": ["public", "parse-message"]
+              "path": ["parse-message"]
             }
           }
         }

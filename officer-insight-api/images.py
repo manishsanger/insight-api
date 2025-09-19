@@ -328,6 +328,7 @@ class ImageDetail(Resource):
 
 @images_ns.route('/serve/<date_path>/<filename>')
 class ImageServe(Resource):
+    @jwt_required()
     def get(self, date_path, filename):
         """Serve image file over HTTP"""
         try:

@@ -3,7 +3,6 @@ import json
 import base64
 import uuid
 from datetime import datetime, timedelta
-from functools import wraps
 import logging
 from pathlib import Path
 import shutil
@@ -18,6 +17,7 @@ from flask import Flask, request, jsonify
 from flask_restx import Api, Resource, fields, Namespace
 from flask_pymongo import PyMongo
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from dotenv import load_dotenv
 import requests
 import jwt
@@ -47,11 +47,14 @@ app.config['STORAGE_PATH'] = os.getenv('STORAGE_PATH', '/app/data/uploads')
 app.config['PERSISTENT_STORAGE'] = os.getenv('PERSISTENT_STORAGE', '/Users/manishsanger/docker-data/doc-reader-service')
 app.config['EXTRACTION_FIELDS'] = os.getenv('EXTRACTION_FIELDS', 'document_type,name,date_of_birth,country,date_of_issue,expiry_date,address,gender,place_of_birth,issuing_authority,nationality,pin_code').split(',')
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-here')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', '3600'))
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False  # Tokens don't expire (optional)
 
 # Initialize extensions
 mongo = PyMongo(app)
 CORS(app, origins=app.config['CORS_ORIGINS'])
+
+# Initialize JWT
+jwt_manager = JWTManager(app)
 
 # Create upload directories
 os.makedirs(app.config['STORAGE_PATH'], exist_ok=True)
@@ -78,10 +81,12 @@ api = Api(
 )
 
 # Namespaces
-ns_public = Namespace('public', description='Public document reading operations')
-ns_admin = Namespace('admin', description='Admin operations (authentication required)')
-api.add_namespace(ns_public, path='/api/public')
-api.add_namespace(ns_admin, path='/api/admin')
+public_ns = Namespace('public', description='Public operations (health only)')
+api_ns = Namespace('api', description='Authenticated API operations')
+admin_ns = Namespace('admin', description='Admin operations (authentication required)')
+api.add_namespace(public_ns, path='/api/public')
+api.add_namespace(api_ns, path='/api')
+api.add_namespace(admin_ns, path='/api/admin')
 
 # Models for API documentation
 doc_reader_model = api.model('DocumentReader', {
@@ -403,43 +408,10 @@ def parse_document_info(ai_output):
     
     return extracted_info
 
-def token_required(f):
-    """Decorator for routes that require authentication"""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = None
-        
-        # Get token from header
-        if 'Authorization' in request.headers:
-            auth_header = request.headers['Authorization']
-            try:
-                token = auth_header.split(" ")[1]  # Bearer <token>
-            except IndexError:
-                return {'message': 'Invalid token format'}, 401
-        
-        if not token:
-            return {'message': 'Token is missing'}, 401
-        
-        try:
-            # Decode the token
-            data = jwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=["HS256"])
-            current_user_role = data.get('role')
-            
-            # Check if user has admin role
-            if current_user_role != 'admin':
-                return {'message': 'Admin privileges required'}, 403
-                
-        except jwt.ExpiredSignatureError:
-            return {'message': 'Token has expired'}, 401
-        except jwt.InvalidTokenError:
-            return {'message': 'Token is invalid'}, 401
-        
-        return f(*args, **kwargs)
-    
-    return decorated
+# Routes
 
 # Public API Routes
-@ns_public.route('/health')
+@public_ns.route('/health')
 class Health(Resource):
     def get(self):
         """Health check endpoint"""
@@ -475,13 +447,14 @@ class Health(Resource):
             logger.error(f"Health check failed: {str(e)}")
             return {"status": "unhealthy", "error": str(e)}, 500
 
-@ns_public.route('/doc-reader')
+@api_ns.route('/doc-reader')
 class DocumentReader(Resource):
-    @api.expect(api.parser()
+    @jwt_required()
+    @api_ns.expect(api.parser()
                 .add_argument('file', location='files', type='file', required=True, help='Document file (image or PDF)')
                 .add_argument('extract_person_image', location='form', type=str, required=False, default='true', help='Extract person image from document (true/false, default: true)')
                 .add_argument('extract_text_info', location='form', type=str, required=False, default='true', help='Extract text information from document (true/false, default: true)'))
-    @api.marshal_with(doc_reader_response)
+    @api_ns.marshal_with(doc_reader_response)
     def post(self):
         """Process document and extract information with optional parameters"""
         try:
@@ -565,10 +538,10 @@ class DocumentReader(Resource):
             return {'message': f'Error processing document: {str(e)}'}, 500
 
 # Admin API Routes
-@ns_admin.route('/doc-reader')
+@admin_ns.route('/doc-reader')
 class AdminDocumentList(Resource):
     @api.doc(security='Bearer Auth')
-    @token_required
+    @jwt_required()
     def get(self):
         """Get paginated list of processed documents (Admin only)"""
         try:
@@ -608,10 +581,10 @@ class AdminDocumentList(Resource):
             logger.error(f"Error getting document list: {str(e)}")
             return {'message': f'Error getting document list: {str(e)}'}, 500
 
-@ns_admin.route('/doc-reader/<string:doc_id>')
+@admin_ns.route('/doc-reader/<string:doc_id>')
 class AdminDocumentDetail(Resource):
     @api.doc(security='Bearer Auth')
-    @token_required
+    @jwt_required()
     def get(self, doc_id):
         """Get individual document details (Admin only)"""
         try:

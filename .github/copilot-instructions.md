@@ -89,7 +89,7 @@ EXTRACTION_FIELDS=field1,field2,field3  # Configurable extraction
 ./scripts/build.sh
 
 # Test deployment
-python test_deployment.py
+python tests/test_deployment.py
 
 # Security check before commits
 ./scripts/security-check.sh
@@ -104,13 +104,17 @@ cd car-identifier-service && python app.py
 
 ### API Testing Pattern
 ```bash
-# Public endpoints (no auth)
-curl -X POST "http://localhost:8653/api/public/car-identifier" \
-  -F "image=@test.jpg"
-
-# Admin endpoints (requires JWT)
+# Authentication required for all endpoints except health/auth
 # 1. Login: POST /api/auth/login {"username":"admin","password":"Apple@123"}
-# 2. Use token: -H "Authorization: Bearer <token>"
+# 2. Get JWT token and use in all requests
+TOKEN=$(curl -X POST "http://localhost:8650/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"Apple@123"}' | jq -r '.access_token')
+
+# All API endpoints require JWT Bearer token
+curl -X POST "http://localhost:8653/api/car-identifier" \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "image=@test.jpg"
 ```
 
 ### Postman Testing Collections
@@ -187,10 +191,10 @@ def parse_ai_response(ai_output):
 
 ### Service Health Checks
 ```bash
-curl http://localhost:8650/api/public/health  # Officer API
-curl http://localhost:8653/api/public/health  # Car Identifier  
-curl http://localhost:8654/api/public/health  # Doc Reader
-curl http://localhost:8652/api/health         # Speech2Text
+curl http://localhost:8650/api/public/health     # Officer API
+curl http://localhost:8653/api/public/health     # Car Identifier  
+curl http://localhost:8654/api/public/health     # Doc Reader
+curl http://localhost:8652/api/public/health     # Speech2Text
 ```
 
 ### Container Debugging

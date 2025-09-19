@@ -34,7 +34,7 @@ When investigating API problems:
 # Standard development pattern
 cd SERVICE-NAME-service && python app.py  # Individual service testing
 ./scripts/build.sh                       # Full system rebuild
-python test_deployment.py                # Deployment verification
+python tests/test_deployment.py          # Deployment verification
 docker-compose up -d SERVICE-NAME        # Restart specific service
 ```
 
@@ -148,7 +148,7 @@ curl -X POST "http://localhost:8653/api/public/car-identifier" \
 
 ### Deployment Verification
 ```bash
-python test_deployment.py  # Automated deployment test
+python tests/test_deployment.py  # Automated deployment test
 ./scripts/security-check.sh # Security validation
 ```
 
