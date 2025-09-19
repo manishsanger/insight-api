@@ -116,6 +116,8 @@ class VehicleCreate(Resource):
                 vehicle_photos = get_image_objects_by_ids(data['vehicle_photos'])
             
             # Create vehicle document
+            current_user_id = get_jwt_identity()
+            
             vehicle_doc = {
                 'name': data.get('name', ''),
                 'vehicle_registration_number': data['vehicle_registration_number'].upper(),
@@ -125,6 +127,7 @@ class VehicleCreate(Resource):
                 'vehicle_color': data.get('vehicle_color', ''),
                 'country_of_origin': data.get('country_of_origin', ''),
                 'vehicle_photos': vehicle_photos,
+                'created_by': current_user_id,  # Add user tracking
                 'is_deleted': False,
                 'created_at': datetime.utcnow(),
                 'updated_at': datetime.utcnow()
@@ -456,3 +459,49 @@ class VehicleHealth(Resource):
                 'status': 'unhealthy',
                 'error': str(e)
             }, 500
+
+@vehicle_ns.route('/my-vehicles')
+class MyVehicles(Resource):
+    @jwt_required()
+    def get(self):
+        """Get all vehicles created by the current user"""
+        try:
+            current_user_id = get_jwt_identity()
+            
+            # Find vehicles created by current user
+            query = {
+                'created_by': current_user_id,
+                'is_deleted': {'$ne': True}
+            }
+            
+            db = get_mongo_db()
+            vehicles = list(db.vehicles.find(query))
+            
+            # Convert ObjectId to string and format response
+            for vehicle in vehicles:
+                vehicle['id'] = str(vehicle['_id'])
+                del vehicle['_id']
+                
+                # Get image objects for vehicle_photos
+                if vehicle.get('vehicle_photos'):
+                    image_ids = [ObjectId(img_id) if isinstance(img_id, str) else img_id 
+                               for img_id in vehicle['vehicle_photos'] if img_id]
+                    images = list(db.images.find({'_id': {'$in': image_ids}}))
+                    
+                    # Format images
+                    formatted_images = []
+                    for img in images:
+                        img['id'] = str(img['_id'])
+                        del img['_id']
+                        formatted_images.append(img)
+                    
+                    vehicle['vehicle_photos'] = formatted_images
+            
+            return {
+                'message': f'Found {len(vehicles)} vehicles',
+                'vehicles': vehicles
+            }, 200
+            
+        except Exception as e:
+            print(f"Error fetching user vehicles: {e}")
+            return {'message': 'Internal server error'}, 500

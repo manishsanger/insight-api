@@ -140,6 +140,8 @@ class PersonCreate(Resource):
                 person_photos = get_image_objects_by_ids(data['person_photos'])
             
             # Create person document
+            current_user_id = get_jwt_identity()
+            
             person_doc = {
                 'name': data['name'],
                 'first_name': data['first_name'],
@@ -156,6 +158,7 @@ class PersonCreate(Resource):
                 'type_of_document': data.get('type_of_document', ''),
                 'date_of_issue': data.get('date_of_issue', ''),
                 'expiry_date': data.get('expiry_date', ''),
+                'created_by': current_user_id,  # Add user tracking
                 'is_deleted': False,
                 'created_at': datetime.utcnow(),
                 'updated_at': datetime.utcnow()
@@ -482,3 +485,49 @@ class PersonHealth(Resource):
                 'status': 'unhealthy',
                 'error': str(e)
             }, 500
+
+@person_ns.route('/my-persons')
+class MyPersons(Resource):
+    @jwt_required()
+    def get(self):
+        """Get all persons created by the current user"""
+        try:
+            current_user_id = get_jwt_identity()
+            
+            # Find persons created by current user
+            query = {
+                'created_by': current_user_id,
+                'is_deleted': {'$ne': True}
+            }
+            
+            db = get_mongo_db()
+            persons = list(db.persons.find(query))
+            
+            # Convert ObjectId to string and format response
+            for person in persons:
+                person['id'] = str(person['_id'])
+                del person['_id']
+                
+                # Get image objects for person_photos
+                if person.get('person_photos'):
+                    image_ids = [ObjectId(img_id) if isinstance(img_id, str) else img_id 
+                               for img_id in person['person_photos'] if img_id]
+                    images = list(db.images.find({'_id': {'$in': image_ids}}))
+                    
+                    # Format images
+                    formatted_images = []
+                    for img in images:
+                        img['id'] = str(img['_id'])
+                        del img['_id']
+                        formatted_images.append(img)
+                    
+                    person['person_photos'] = formatted_images
+            
+            return {
+                'message': f'Found {len(persons)} persons',
+                'persons': persons
+            }, 200
+            
+        except Exception as e:
+            print(f"Error fetching user persons: {e}")
+            return {'message': 'Internal server error'}, 500

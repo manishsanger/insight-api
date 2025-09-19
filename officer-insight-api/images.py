@@ -417,3 +417,31 @@ class ImageHealth(Resource):
                 'status': 'unhealthy',
                 'error': str(e)
             }, 500
+
+@images_ns.route('/my-images')
+class MyImages(Resource):
+    @jwt_required()
+    def get(self):
+        """Get all images uploaded by the current user"""
+        try:
+            current_user_id = get_jwt_identity()
+            
+            # Find images uploaded by current user
+            query = {'uploaded_by': current_user_id}
+            
+            db = get_mongo_db()
+            images = list(db.images.find(query))
+            
+            # Convert ObjectId to string
+            for image in images:
+                image['id'] = str(image['_id'])
+                del image['_id']
+            
+            return {
+                'message': f'Found {len(images)} images',
+                'images': images
+            }, 200
+            
+        except Exception as e:
+            print(f"Error fetching user images: {e}")
+            return {'message': 'Internal server error'}, 500
