@@ -675,6 +675,71 @@
           }
         }
       ]
+    },
+    {
+      "name": "User-Specific Data",
+      "item": [
+        {
+          "name": "My Persons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8650/persons/my-persons",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8650",
+              "path": ["persons", "my-persons"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "My Vehicles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8650/vehicles/my-vehicles",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8650",
+              "path": ["vehicles", "my-vehicles"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "My Images",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8650/images/my-images",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8650",
+              "path": ["images", "my-images"]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }

@@ -54,6 +54,11 @@ A comprehensive Flask-based microservice for law enforcement data processing, in
 - `DELETE /api/vehicles/{id}` - Hard delete vehicle
 - `GET /api/vehicles/health` - Vehicles service health check
 
+### User-Specific Data APIs
+- `GET /persons/my-persons` - Get all persons created by the current user
+- `GET /vehicles/my-vehicles` - Get all vehicles created by the current user
+- `GET /images/my-images` - Get all images uploaded by the current user
+
 ### Legacy APIs
 - `POST /api/public/parse-message` - Parse text or audio message
 - `GET /api/public/health` - Service health check
@@ -98,6 +103,7 @@ A comprehensive Flask-based microservice for law enforcement data processing, in
   "type_of_document": "string",
   "date_of_issue": "string (YYYY-MM-DD)",
   "expiry_date": "string (YYYY-MM-DD)",
+  "created_by": "string (user ID who created this person)",
   "is_deleted": "boolean",
   "created_at": "datetime",
   "updated_at": "datetime"
@@ -116,6 +122,7 @@ A comprehensive Flask-based microservice for law enforcement data processing, in
   "vehicle_color": "string",
   "country_of_origin": "string",
   "vehicle_photos": "array of image objects",
+  "created_by": "string (user ID who created this vehicle)",
   "is_deleted": "boolean",
   "created_at": "datetime",
   "updated_at": "datetime"

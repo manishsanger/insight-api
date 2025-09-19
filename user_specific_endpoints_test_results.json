@@ -1,0 +1,191 @@
+{
+  "timestamp": "2025-09-19T22:59:58.725957",
+  "success": false,
+  "results": [
+    {
+      "test": "Authentication",
+      "success": true,
+      "message": "Got JWT token: eyJhbGciOiJIUzI1NiIs...",
+      "response_data": null,
+      "timestamp": "2025-09-19T22:59:58.704978"
+    },
+    {
+      "test": "Auth Required - /persons/my-persons",
+      "success": false,
+      "message": "Expected 401, got 500",
+      "response_data": null,
+      "timestamp": "2025-09-19T22:59:58.709436"
+    },
+    {
+      "test": "Auth Required - /vehicles/my-vehicles",
+      "success": false,
+      "message": "Expected 401, got 500",
+      "response_data": null,
+      "timestamp": "2025-09-19T22:59:58.712179"
+    },
+    {
+      "test": "Auth Required - /images/my-images",
+      "success": false,
+      "message": "Expected 401, got 500",
+      "response_data": null,
+      "timestamp": "2025-09-19T22:59:58.714176"
+    },
+    {
+      "test": "Create Test Person",
+      "success": true,
+      "message": "Test person created successfully",
+      "response_data": null,
+      "timestamp": "2025-09-19T22:59:58.716546"
+    },
+    {
+      "test": "Create Test Vehicle",
+      "success": true,
+      "message": "Test vehicle created successfully",
+      "response_data": null,
+      "timestamp": "2025-09-19T22:59:58.719168"
+    },
+    {
+      "test": "My Persons Endpoint",
+      "success": true,
+      "message": "Found 2 persons for current user",
+      "response_data": {
+        "message": "Found 2 persons",
+        "persons": [
+          {
+            "name": "John Doe",
+            "first_name": "John",
+            "last_name": "Doe",
+            "phone_number": "123-456-7890",
+            "mobile_number": "",
+            "gender": "Male",
+            "date_of_birth": "",
+            "place_of_birth": "",
+            "nationality": "American",
+            "pin_code": "",
+            "address": "",
+            "person_photos": [],
+            "type_of_document": "",
+            "date_of_issue": "",
+            "expiry_date": "",
+            "created_by": "688cc7e0127d73f6377a35c4",
+            "is_deleted": false,
+            "created_at": "2025-09-19T17:22:00.145000",
+            "updated_at": "2025-09-19T17:22:00.145000",
+            "id": "68cd9138f1bcc1596dcb0890"
+          },
+          {
+            "name": "Test User",
+            "first_name": "Test",
+            "last_name": "User",
+            "phone_number": "123-456-7890",
+            "mobile_number": "",
+            "gender": "Male",
+            "date_of_birth": "",
+            "place_of_birth": "",
+            "nationality": "American",
+            "pin_code": "",
+            "address": "",
+            "person_photos": [],
+            "type_of_document": "",
+            "date_of_issue": "",
+            "expiry_date": "",
+            "created_by": "688cc7e0127d73f6377a35c4",
+            "is_deleted": false,
+            "created_at": "2025-09-19T17:29:58.714000",
+            "updated_at": "2025-09-19T17:29:58.714000",
+            "id": "68cd9316f1bcc1596dcb0892"
+          }
+        ]
+      },
+      "timestamp": "2025-09-19T22:59:58.721425"
+    },
+    {
+      "test": "My Persons Data Validation",
+      "success": true,
+      "message": "All persons have proper user association",
+      "response_data": null,
+      "timestamp": "2025-09-19T22:59:58.721432"
+    },
+    {
+      "test": "My Vehicles Endpoint",
+      "success": true,
+      "message": "Found 2 vehicles for current user",
+      "response_data": {
+        "message": "Found 2 vehicles",
+        "vehicles": [
+          {
+            "name": "",
+            "vehicle_registration_number": "DEF456",
+            "model": "",
+            "vehicle_make": "Honda",
+            "vehicle_model": "Civic",
+            "vehicle_color": "Red",
+            "country_of_origin": "Japan",
+            "vehicle_photos": [],
+            "created_by": "688cc7e0127d73f6377a35c4",
+            "is_deleted": false,
+            "created_at": "2025-09-19T17:22:34.848000",
+            "updated_at": "2025-09-19T17:22:34.848000",
+            "id": "68cd915af1bcc1596dcb0891"
+          },
+          {
+            "name": "",
+            "vehicle_registration_number": "TEST225958",
+            "model": "",
+            "vehicle_make": "Test",
+            "vehicle_model": "Model",
+            "vehicle_color": "Blue",
+            "country_of_origin": "USA",
+            "vehicle_photos": [],
+            "created_by": "688cc7e0127d73f6377a35c4",
+            "is_deleted": false,
+            "created_at": "2025-09-19T17:29:58.717000",
+            "updated_at": "2025-09-19T17:29:58.717000",
+            "id": "68cd9316f1bcc1596dcb0893"
+          }
+        ]
+      },
+      "timestamp": "2025-09-19T22:59:58.723660"
+    },
+    {
+      "test": "My Vehicles Data Validation",
+      "success": true,
+      "message": "All vehicles have proper user association",
+      "response_data": null,
+      "timestamp": "2025-09-19T22:59:58.723669"
+    },
+    {
+      "test": "My Images Endpoint",
+      "success": true,
+      "message": "Found 1 images for current user",
+      "response_data": {
+        "message": "Found 1 images",
+        "images": [
+          {
+            "storage_path": "/app/data/images/2025-09-19/cd56d5ac-5192-4816-802d-e7e83061e89a.png",
+            "image_url": "http://localhost:8650/api/images/serve/2025-09-19/cd56d5ac-5192-4816-802d-e7e83061e89a.png",
+            "filename": "paper.png",
+            "unique_filename": "cd56d5ac-5192-4816-802d-e7e83061e89a.png",
+            "upload_date": "2025-09-19T14:57:38.983000",
+            "uploaded_by": "688cc7e0127d73f6377a35c4",
+            "username": "admin",
+            "file_size": 22272,
+            "file_type": "image/png",
+            "date_path": "2025-09-19",
+            "created_at": "2025-09-19T14:57:38.983000",
+            "updated_at": "2025-09-19T14:57:38.983000",
+            "id": "68cd6f6224af387a6be7b0db"
+          }
+        ]
+      },
+      "timestamp": "2025-09-19T22:59:58.725716"
+    },
+    {
+      "test": "My Images Data Validation",
+      "success": true,
+      "message": "All images have proper user association",
+      "response_data": null,
+      "timestamp": "2025-09-19T22:59:58.725726"
+    }
+  ]
+}

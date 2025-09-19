@@ -524,7 +524,158 @@ pm.test("Missing image file error", function () {
 });
 ```
 
-## 🔄 Collection Runner Tests
+## � User-Specific Data Tests
+
+### Test 17: Get My Persons
+
+**Endpoint:** `GET http://localhost:8650/persons/my-persons`
+
+**Headers:**
+```
+Authorization: Bearer {{jwt_token}}
+```
+
+**Expected Response:**
+```json
+{
+    "message": "Found X persons",
+    "persons": [
+        {
+            "id": "string",
+            "name": "John Doe",
+            "first_name": "John",
+            "last_name": "Doe",
+            "created_by": "user_id",
+            "person_photos": [],
+            "created_at": "datetime",
+            "updated_at": "datetime"
+        }
+    ]
+}
+```
+
+**Test Script:**
+```javascript
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Response has persons array", function () {
+    const responseJson = pm.response.json();
+    pm.expect(responseJson).to.have.property('persons');
+    pm.expect(responseJson.persons).to.be.an('array');
+});
+
+pm.test("All persons belong to current user", function () {
+    const responseJson = pm.response.json();
+    if (responseJson.persons.length > 0) {
+        responseJson.persons.forEach(person => {
+            pm.expect(person).to.have.property('created_by');
+        });
+    }
+});
+```
+
+### Test 18: Get My Vehicles
+
+**Endpoint:** `GET http://localhost:8650/vehicles/my-vehicles`
+
+**Headers:**
+```
+Authorization: Bearer {{jwt_token}}
+```
+
+**Expected Response:**
+```json
+{
+    "message": "Found X vehicles",
+    "vehicles": [
+        {
+            "id": "string",
+            "vehicle_registration_number": "ABC123",
+            "vehicle_make": "Toyota",
+            "vehicle_model": "Camry",
+            "created_by": "user_id",
+            "vehicle_photos": [],
+            "created_at": "datetime",
+            "updated_at": "datetime"
+        }
+    ]
+}
+```
+
+**Test Script:**
+```javascript
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Response has vehicles array", function () {
+    const responseJson = pm.response.json();
+    pm.expect(responseJson).to.have.property('vehicles');
+    pm.expect(responseJson.vehicles).to.be.an('array');
+});
+
+pm.test("All vehicles belong to current user", function () {
+    const responseJson = pm.response.json();
+    if (responseJson.vehicles.length > 0) {
+        responseJson.vehicles.forEach(vehicle => {
+            pm.expect(vehicle).to.have.property('created_by');
+        });
+    }
+});
+```
+
+### Test 19: Get My Images
+
+**Endpoint:** `GET http://localhost:8650/images/my-images`
+
+**Headers:**
+```
+Authorization: Bearer {{jwt_token}}
+```
+
+**Expected Response:**
+```json
+{
+    "message": "Found X images",
+    "images": [
+        {
+            "id": "string",
+            "filename": "test.jpg",
+            "upload_date": "datetime",
+            "uploaded_by": "user_id",
+            "username": "admin",
+            "file_size": 12345,
+            "file_type": "image/jpeg"
+        }
+    ]
+}
+```
+
+**Test Script:**
+```javascript
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Response has images array", function () {
+    const responseJson = pm.response.json();
+    pm.expect(responseJson).to.have.property('images');
+    pm.expect(responseJson.images).to.be.an('array');
+});
+
+pm.test("All images belong to current user", function () {
+    const responseJson = pm.response.json();
+    if (responseJson.images.length > 0) {
+        responseJson.images.forEach(image => {
+            pm.expect(image).to.have.property('uploaded_by');
+        });
+    }
+});
+```
+
+## �🔄 Collection Runner Tests
 
 ### Pre-request Script (Collection Level)
 

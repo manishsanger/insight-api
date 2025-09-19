@@ -16,6 +16,7 @@ The system consists of five main microservices:
   - **Image Management System**: Upload, store, and serve images with organized file structure
   - **Person Management**: Complete CRUD operations for person records with photo attachments
   - **Vehicle Management**: Complete CRUD operations for vehicle records with photo attachments
+  - **User-Specific Data Access**: Dedicated endpoints for users to access only their own data
   - Soft delete capabilities for data preservation
   - RESTful APIs with comprehensive pagination and search
 - **AI Model**: Llama3.2:latest for text processing
@@ -71,6 +72,8 @@ The system consists of five main microservices:
 - MongoDB integration for persistent storage
 - Request logging and audit trails
 - Extraction history and analytics
+- **User Data Isolation**: Each user can only access their own created data
+- Automatic user association on data creation
 - Configurable data retention policies
 
 ### 🌐 API Integration
