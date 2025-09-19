@@ -118,6 +118,21 @@ curl http://localhost:8653/api/public/health  # Car Identifier
 curl http://localhost:8652/api/health         # Speech2Text
 ```
 
+### ⚠️ Important: Persistent Storage Configuration
+
+All services use the **global docker-data directory** for persistent storage:
+```
+/Users/manishsanger/docker-data/
+├── mongodb/                    # MongoDB data
+├── officer-insight-api/        # Images, uploads, user data
+├── car-identifier-service/     # Vehicle analysis data
+├── doc-reader-service/         # Document analysis data
+├── admin-ui/                   # UI data
+└── speech2text-service/        # Audio processing data
+```
+
+**Note**: The system does NOT use the local `./docker-data/` directory. All persistent data is stored in the global location to avoid conflicts and ensure data persistence across deployments.
+
 ### Service URLs
 - **Officer Insight API**: http://localhost:8650
 - **Car Identifier Service**: http://localhost:8653

@@ -141,6 +141,8 @@ test_* sample_*
 /docker-data/ /uploads/
 ```
 
+**Important**: All services use `/Users/manishsanger/docker-data/` (global directory) for persistent storage, not local docker-data directory.
+
 ### Pre-commit Security Check
 Always run: `./scripts/security-check.sh` before commits
 

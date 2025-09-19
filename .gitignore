@@ -228,3 +228,4 @@ personal_*.png
 /uploads/
 /persistent_storage/
 /user_uploads/
+/docker-data/

@@ -25,6 +25,8 @@ mkdir -p /Users/manishsanger/docker-data/mongodb
 mkdir -p /Users/manishsanger/docker-data/officer-insight-api
 mkdir -p /Users/manishsanger/docker-data/admin-ui
 mkdir -p /Users/manishsanger/docker-data/speech2text-service
+mkdir -p /Users/manishsanger/docker-data/car-identifier-service
+mkdir -p /Users/manishsanger/docker-data/doc-reader-service
 
 # If clean start, remove all data
 if [ "$CLEAN_START" = true ]; then
@@ -33,6 +35,8 @@ if [ "$CLEAN_START" = true ]; then
     sudo rm -rf /Users/manishsanger/docker-data/officer-insight-api/*
     sudo rm -rf /Users/manishsanger/docker-data/admin-ui/*
     sudo rm -rf /Users/manishsanger/docker-data/speech2text-service/*
+    sudo rm -rf /Users/manishsanger/docker-data/car-identifier-service/*
+    sudo rm -rf /Users/manishsanger/docker-data/doc-reader-service/*
     
     echo "🔄 Stopping and removing existing containers..."
     docker-compose down -v
