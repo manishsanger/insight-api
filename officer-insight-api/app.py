@@ -329,7 +329,7 @@ def speechToText(audio_file):
     try:
         # Test connectivity first
         try:
-            health_response = requests.get(f"{app.config['SPEECH2TEXT_API_URL']}/api/health", timeout=5)
+            health_response = requests.get(f"{app.config['SPEECH2TEXT_API_URL']}/api/public/health", timeout=5)
         except Exception as health_error:
             pass
         
@@ -881,7 +881,7 @@ class Health(Resource):
         try:
             # Check Speech2Text service
             response = requests.get(
-                f"{app.config['SPEECH2TEXT_API_URL']}/api/health",
+                f"{app.config['SPEECH2TEXT_API_URL']}/api/public/health",
                 timeout=5
             )
             speech_status = 'healthy' if response.status_code == 200 else 'unhealthy'
