@@ -2,7 +2,7 @@ import os
 import uuid
 import json
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_restx import Api, Resource, fields, Namespace
@@ -24,7 +24,8 @@ app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 
 # JWT Configuration
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-here')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False  # Tokens don't expire (optional)
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)  # Tokens expire after 24 hours
+app.config['JWT_ALGORITHM'] = 'HS256'
 
 # Enable debug logging
 import logging
@@ -347,15 +348,8 @@ class ConvertAudio(Resource):
         app.logger.debug("=== CONVERT ENDPOINT CALLED ===")
         app.logger.debug(f"Request files: {list(request.files.keys())}")
         
-        # Verify authentication
-        auth_header = request.headers.get('Authorization', 'Not provided')
-        app.logger.debug(f"Authorization header: {auth_header}")
-        
-        if not verify_token():
-            app.logger.error("Authentication failed")
-            return {'message': 'Invalid or missing API token'}, 401
-        
-        app.logger.debug("Authentication successful")
+        # JWT authentication is already verified by @jwt_required() decorator
+        app.logger.debug("JWT Authentication successful")
         
         # Check if we have audio file
         has_audio = 'audio_file' in request.files and request.files['audio_file'].filename != ''

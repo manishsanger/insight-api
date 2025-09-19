@@ -46,7 +46,7 @@ app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
 
 # Configuration
-app.config['JWT_SECRET_KEY'] = 'insight-api-jwt-secret-key-2024'
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'insight-api-jwt-secret-key-2024')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
 app.config['MONGO_URI'] = os.getenv('MONGODB_URI', 'mongodb://admin:Apple%40123@mongodb:27017/insight_db?authSource=admin')
 app.config['SPEECH2TEXT_API_URL'] = os.getenv('SPEECH2TEXT_API_URL', 'http://speech2text-service:8652')
@@ -327,21 +327,39 @@ def speechToText(audio_file):
         str: Transcribed text from audio, or None if conversion fails
     """
     try:
+        print(f"=== SPEECH TO TEXT FUNCTION CALLED ===", flush=True)
+        print(f"Audio file: {audio_file.filename if audio_file else 'None'}", flush=True)
+        print(f"Audio content type: {audio_file.content_type if audio_file else 'None'}", flush=True)
+        
         # Test connectivity first
         try:
             health_response = requests.get(f"{app.config['SPEECH2TEXT_API_URL']}/api/public/health", timeout=5)
+            print(f"Speech2text health check status: {health_response.status_code}", flush=True)
         except Exception as health_error:
-            pass
+            print(f"Health check failed: {health_error}", flush=True)
         
         # Prepare file for forwarding
         audio_file.seek(0)
         file_content = audio_file.read()
+        print(f"Audio file size: {len(file_content)} bytes", flush=True)
         
         # Create files dict with filename preserved
         files = {
             'audio_file': (audio_file.filename, file_content, audio_file.content_type or 'application/octet-stream')
         }
-        headers = {'Authorization': f'Bearer {app.config["SPEECH2TEXT_API_TOKEN"]}'}
+        
+        # Get the current JWT token from the request context
+        try:
+            # Get current JWT token from the Authorization header
+            current_token = request.headers.get('Authorization', '').replace('Bearer ', '')
+            print(f"Using JWT token for speech2text service", flush=True)
+            headers = {'Authorization': f'Bearer {current_token}'}
+        except Exception as token_error:
+            print(f"Failed to get JWT token, falling back to API token: {token_error}", flush=True)
+            headers = {'Authorization': f'Bearer {app.config["SPEECH2TEXT_API_TOKEN"]}'}
+        
+        print(f"Sending request to: {app.config['SPEECH2TEXT_API_URL']}/api/convert", flush=True)
+        print(f"Headers: Authorization: Bearer [token]", flush=True)
         
         response = requests.post(
             f"{app.config['SPEECH2TEXT_API_URL']}/api/convert",
@@ -350,14 +368,22 @@ def speechToText(audio_file):
             timeout=120
         )
         
+        print(f"Response status code: {response.status_code}", flush=True)
+        print(f"Response content: {response.text[:500]}...", flush=True)
+        
         if response.status_code == 200:
             result = response.json()
             transcribed_text = result.get('text', '')
+            print(f"Transcribed text length: {len(transcribed_text) if transcribed_text else 0}", flush=True)
             return transcribed_text
         else:
+            print(f"Speech2text API error: {response.status_code} - {response.text}", flush=True)
             return None
             
     except Exception as e:
+        print(f"Exception in speechToText: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
         return None
 
 def process_text_with_ollama_service(text):

@@ -47,7 +47,8 @@ app.config['STORAGE_PATH'] = os.getenv('STORAGE_PATH', '/app/data/uploads')
 app.config['PERSISTENT_STORAGE'] = os.getenv('PERSISTENT_STORAGE', '/Users/manishsanger/docker-data/doc-reader-service')
 app.config['EXTRACTION_FIELDS'] = os.getenv('EXTRACTION_FIELDS', 'document_type,name,date_of_birth,country,date_of_issue,expiry_date,address,gender,place_of_birth,issuing_authority,nationality,pin_code').split(',')
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-here')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False  # Tokens don't expire (optional)
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)  # Tokens expire after 24 hours
+app.config['JWT_ALGORITHM'] = 'HS256'
 
 # Initialize extensions
 mongo = PyMongo(app)

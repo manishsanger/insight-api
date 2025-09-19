@@ -28,6 +28,7 @@ services:
       SPEECH2TEXT_API_URL: http://speech2text-service:8652
       SPEECH2TEXT_API_TOKEN: insight_speech_token_2024
       OLLAMA_URL: http://host.docker.internal:11434
+      JWT_SECRET_KEY: insight-api-jwt-secret-key-2024
       # Image management configuration
       IMAGES_UPLOAD_BASE_PATH: /app/data/images
       IMAGES_ALLOWED_EXTENSIONS: jpg,jpeg,png,gif,bmp,tiff,webp
@@ -55,6 +56,7 @@ services:
       ALLOWED_EXTENSIONS: jpg,jpeg,png,gif,bmp,webp
       MAX_CONTENT_LENGTH: 16777216
       EXTRACTION_FIELDS: vehicle_registration,vehicle_make,vehicle_color,vehicle_model
+      JWT_SECRET_KEY: insight-api-jwt-secret-key-2024
     depends_on:
       - mongodb
     networks:
@@ -91,6 +93,7 @@ services:
     environment:
       API_TOKEN: insight_speech_token_2024
       WHISPER_MODEL: base
+      JWT_SECRET_KEY: insight-api-jwt-secret-key-2024
     networks:
       - insight-network
     volumes:
@@ -111,7 +114,7 @@ services:
       ALLOWED_EXTENSIONS: jpg,jpeg,png,gif,bmp,webp,pdf
       MAX_CONTENT_LENGTH: 16777216
       EXTRACTION_FIELDS: document_type,name,date_of_birth,country,date_of_issue,expiry_date,address,gender,place_of_birth,issuing_authority,nationality,pin_code,person_image
-      JWT_SECRET_KEY: your-secret-key-here
+      JWT_SECRET_KEY: insight-api-jwt-secret-key-2024
       JWT_ACCESS_TOKEN_EXPIRES: 3600
     depends_on:
       - mongodb

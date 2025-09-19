@@ -1,7 +1,7 @@
 import os
 import requests
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 from flask_cors import CORS
@@ -49,9 +49,10 @@ app.config['MODEL_TIMEOUT'] = int(os.getenv('MODEL_TIMEOUT', '180'))
 app.config['ALLOWED_EXTENSIONS'] = set(os.getenv('ALLOWED_EXTENSIONS', 'jpg,jpeg,png,gif,bmp,webp').split(','))
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', str(16 * 1024 * 1024)))  # 16MB default
 
-# JWT Configuration
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-here')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False  # Tokens don't expire (optional)
+# JWT Configuration - Match officer-insight-api exactly
+app.config['JWT_SECRET_KEY'] = 'insight-api-jwt-secret-key-2024'  # Hardcoded for testing
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
+# Remove JWT_ALGORITHM to use default
 
 # Initialize JWT
 jwt = JWTManager(app)
@@ -262,11 +263,21 @@ class CarIdentifier(Resource):
         try:
             # Check if image file is provided
             if 'image' not in request.files:
-                return {'message': 'Image file is required'}, 400
+                return {'message': 'Image file is required. Please upload an image file.'}, 400
             
             image_file = request.files['image']
-            if image_file.filename == '':
-                return {'message': 'No image file selected'}, 400
+            
+            # Check if filename is empty
+            if not image_file.filename or image_file.filename == '':
+                return {'message': 'No image file selected. Please choose an image file to upload.'}, 400
+            
+            # Read file content to check if it's actually empty
+            image_file.seek(0, 2)  # Seek to end of file
+            file_size = image_file.tell()
+            image_file.seek(0)  # Reset to beginning
+            
+            if file_size == 0:
+                return {'message': 'Image file is empty (0 bytes). Please upload a valid image file.'}, 400
             
             # Validate file type
             if not validate_file_extension(image_file.filename):
