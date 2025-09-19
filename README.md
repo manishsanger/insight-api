@@ -12,7 +12,8 @@ The system consists of five main microservices:
 - **Purpose**: Core API service for text/audio processing, image management, person management, and vehicle management
 - **Features**: 
   - JWT authentication and user management
-  - Text extraction and audio-to-text conversion
+  - **🎤 FULL AUDIO PROCESSING PIPELINE**: Complete audio-to-text conversion with AI extraction (NEWLY FUNCTIONAL!)
+  - Text extraction and structured information processing
   - **Image Management System**: Upload, store, and serve images with organized file structure
   - **Person Management**: Complete CRUD operations for person records with photo attachments
   - **Vehicle Management**: Complete CRUD operations for vehicle records with photo attachments
@@ -38,11 +39,12 @@ The system consists of five main microservices:
   - `extract_person_image`: Extract person's photo from document (default: true)
   - `extract_text_info`: Extract text information from document (default: true)
 
-### 🎤 Speech2Text Service (Port 8652)
-- **Purpose**: Audio processing and speech-to-text conversion
-- **Features**: Multi-format audio support, Whisper AI integration
-- **AI Model**: OpenAI Whisper for speech recognition
+### 🎤 Speech2Text Service (Port 8652) ⭐ FULLY FUNCTIONAL
+- **Purpose**: Audio processing and speech-to-text conversion with JWT authentication
+- **Features**: Multi-format audio support, Whisper AI integration, seamless inter-service communication
+- **AI Model**: OpenAI Whisper for speech recognition + Llama3.2:latest for text processing
 - **Formats**: WAV, MP3, M4A, FLAC, OGG
+- **Authentication**: JWT-based secure communication with officer-insight-api
 
 ### 🖥️ Admin UI (Port 8651)
 - **Purpose**: Web-based administration interface
@@ -53,6 +55,7 @@ The system consists of five main microservices:
 ## ✨ Key Features
 
 ### 🎯 Core Capabilities
+- **🎤 COMPLETE AUDIO PROCESSING PIPELINE**: Audio → Speech Recognition → AI Extraction → Structured Data (WORKING!)
 - **Multi-Source Data Processing**: Text, audio, image, and document inputs
 - **AI-Powered Analysis**: Advanced machine learning models for accurate extraction
 - **Document Intelligence**: Automated parsing of identity documents, certificates, and forms
@@ -62,11 +65,11 @@ The system consists of five main microservices:
 - **Microservices Architecture**: Scalable and maintainable design
 
 ### 🔒 Security & Authentication
-- JWT-based authentication system with Bearer tokens
+- JWT-based authentication system with Bearer tokens across all services
 - Role-based access control (Admin/User)
 - All endpoints secured except health and auth endpoints
 - CORS protection and input validation
-- Secure API access with JWT token validation
+- Secure inter-service communication with synchronized JWT authentication
 
 ### 📊 Data Management
 - MongoDB integration for persistent storage
@@ -87,8 +90,8 @@ The system consists of five main microservices:
 ### Prerequisites
 - Docker and Docker Compose
 - Ollama with required models:
-  - `gemma3:12b` (for vehicle identification)
-  - `llama3.2:latest` (for text processing)
+  - `gemma3:12b` (for vehicle identification and document reading)
+  - `llama3.2:latest` (for text processing and audio content analysis)
 
 ### Installation
 
@@ -212,11 +215,25 @@ curl -X POST "http://localhost:8653/api/car-identifier" \
   -F "image=@path/to/vehicle/image.jpg"
 ```
 
-### Audio Processing
+### Audio Processing ⭐ FULLY FUNCTIONAL
 ```bash
+# Process audio file (traffic offence report example)
 curl -X POST "http://localhost:8650/api/parse-message" \
   -H "Authorization: Bearer $TOKEN" \
-  -F "audio_message=@path/to/audio/report.wav"
+  -F "audio_message=@test-data/traffic-offence-report.wav"
+
+# Expected Response:
+# {
+#   "id": "68cda46e730539f1afe6aea7",
+#   "text": "Add Traffic Offence Report. Offence Occurred at 10:00am on 15/05/2025...",
+#   "extracted_info": {
+#     "driver_name": "James Smith",
+#     "vehicle_registration": "OU18ZFB", 
+#     "vehicle_make": "BMW",
+#     "offence": "No Seat Belt"
+#   },
+#   "has_audio": true
+# }
 ```
 
 ## ⚙️ Configuration

@@ -1,9 +1,9 @@
 {
   "info": {
     "name": "Speech2Text Service",
-    "description": "API collection for Speech to Text Service - Whisper-based audio transcription with Ollama text processing",
+    "description": "API collection for Speech to Text Service - Whisper-based audio transcription with Ollama text processing. Now uses JWT authentication for secure inter-service communication.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "1.0.0"
+    "version": "2.0.0"
   },
   "variable": [
     {
@@ -82,6 +82,26 @@
     },
     {
       "name": "Convert Audio to Text",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has transcribed text\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('text');",
+              "    pm.expect(jsonData).to.have.property('file_id');",
+              "    pm.expect(jsonData).to.have.property('timestamp');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [
@@ -94,9 +114,10 @@
           "mode": "formdata",
           "formdata": [
             {
-              "key": "audio",
+              "key": "audio_file",
               "type": "file",
-              "src": "/path/to/audio/file.wav"
+              "src": "../test-data/traffic-offence-report.wav",
+              "description": "Audio file for transcription - use traffic-offence-report.wav from test-data"
             }
           ]
         },

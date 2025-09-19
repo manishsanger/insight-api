@@ -1,9 +1,9 @@
 {
   "info": {
     "name": "Insight API - Complete System Collection",
-    "description": "Complete system-wide API collection for all Insight API microservices including Officer Insight API, Car Identifier, Doc Reader, Speech2Text, and Admin UI",
+    "description": "Complete system-wide API collection for all Insight API microservices including Officer Insight API, Car Identifier, Doc Reader, Speech2Text, and Admin UI. Features full audio processing pipeline with speech-to-text conversion and AI-powered information extraction.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "2.0.0"
+    "version": "2.1.0"
   },
   "variable": [
     {

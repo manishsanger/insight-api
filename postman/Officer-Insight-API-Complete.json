@@ -1,9 +1,9 @@
 {
   "info": {
     "name": "Officer Insight API - Complete Collection",
-    "description": "Complete API collection for Officer Insight API including authentication, text/audio processing, image management, person management, and vehicle management",
+    "description": "Complete API collection for Officer Insight API including authentication, text/audio processing, image management, person management, and vehicle management. Now includes full audio processing capabilities with speech-to-text conversion and AI extraction.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "2.0.0"
+    "version": "2.1.0"
   },
   "variable": [
     {
@@ -651,21 +651,145 @@
       "item": [
         {
           "name": "Parse Text Message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has extracted info\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('extracted_info');",
+                  "    pm.expect(jsonData).to.have.property('text');",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Authorization",
                 "value": "Bearer {{admin_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
               }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n    \"message\": \"I saw a blue Toyota Camry with license plate ABC123 speeding on Main Street. The driver was a young male in his 20s.\"\n}"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "message",
+                  "value": "Officer Johnson reporting traffic violation. Red Honda Civic plate ABC123 speeding in school zone. Driver name is John Smith, male, DOB 15/03/1990, address 123 Main Street, London.",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/parse-message",
+              "host": ["{{base_url}}"],
+              "path": ["parse-message"]
+            }
+          }
+        },
+        {
+          "name": "Parse Audio Message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has extracted info from audio\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('extracted_info');",
+                  "    pm.expect(jsonData).to.have.property('text');",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData.has_audio).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio_message",
+                  "type": "file",
+                  "src": "../test-data/traffic-offence-report.wav",
+                  "description": "Upload the traffic offence report audio file from test-data directory"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/parse-message",
+              "host": ["{{base_url}}"],
+              "path": ["parse-message"]
+            }
+          }
+        },
+        {
+          "name": "Parse Mixed Input (Text + Audio)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response prioritizes audio over text\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('extracted_info');",
+                  "    pm.expect(jsonData).to.have.property('text');",
+                  "    pm.expect(jsonData.has_audio).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "message",
+                  "value": "This text should be ignored when audio is present",
+                  "type": "text"
+                },
+                {
+                  "key": "audio_message",
+                  "type": "file",
+                  "src": "../test-data/traffic-offence-report.wav",
+                  "description": "Audio takes priority over text input"
+                }
+              ]
             },
             "url": {
               "raw": "{{base_url}}/parse-message",

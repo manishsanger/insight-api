@@ -1,23 +1,25 @@
 # Officer Insight API System - Postman Testing Guide
 
-This comprehensive guide provides step-by-step instructions for testing all API endpoints using Postman. The Officer Insight API System consists of four microservices that work together to process text messages, audio files, and vehicle images using AI for structured information extraction.
+This comprehensive guide provides step-by-step instructions for testing all API endpoints using Postman. The Officer Insight API System consists of five microservices that work together to process text messages, audio files, document images, and vehicle images using AI for structured information extraction.
 
 ## 📋 Prerequisites
 
 1. **Postman** installed (Desktop app or web version)
 2. **All services running** on your local machine (use `./scripts/build.sh`)
 3. **Sample files** for testing:
-   - Audio file (WAV, MP3, MP4, FLAC)
+   - Audio file: `test-data/traffic-offence-report.wav` (WAV, MP3, MP4, FLAC supported)
    - Vehicle image (JPG, PNG, GIF, BMP, WebP)
+   - Document image (JPG, PNG, PDF)
 4. **AI Services** running:
-   - Ollama with Gemma3:12b model
-   - Whisper for speech-to-text
+   - Ollama with Gemma3:12b model (vision) and Llama3.2:latest (text)
+   - Whisper for speech-to-text transcription
 
 ## 🌐 Base URLs
 
 ```
 Officer Insight API: http://localhost:8650/api
 Car Identifier Service: http://localhost:8653/api
+Doc Reader Service: http://localhost:8654/api
 Speech2Text Service: http://localhost:8652/api
 Admin UI: http://localhost:8651
 ```
@@ -32,17 +34,17 @@ Create a new environment in Postman with these variables:
 |--------------|-------|
 | `officer_api_base_url` | `http://localhost:8650` |
 | `car_identifier_base_url` | `http://localhost:8653` |
+| `doc_reader_base_url` | `http://localhost:8654` |
 | `speech_url` | `http://localhost:8652/api` |
 | `admin_ui_url` | `http://localhost:8651` |
 | `jwt_token` | `{{jwt_token}}` (will be set automatically) |
-| `speech_token` | `insight_speech_token_2024` |
 
 ### 2. Create a New Collection
 
 1. Open Postman
 2. Click "New" → "Collection"
 3. Name it "Officer Insight API System Tests"
-4. Add description: "Complete API testing for Officer Insight API System with four microservices"
+4. Add description: "Complete API testing for Officer Insight API System with five microservices including full audio processing pipeline"
 
 ## 🔐 Authentication Tests
 
@@ -213,7 +215,7 @@ pm.test("Driver information extracted", function () {
 });
 ```
 
-### Test 6: Parse Audio Message
+### Test 6: Parse Audio Message (NEW - Full Audio Processing Pipeline)
 
 **Endpoint:** `POST {{officer_api_base_url}}/api/parse-message`
 
@@ -226,7 +228,7 @@ Authorization: Bearer {{admin_token}}
 **Body (form-data):**
 - Key: `audio_message`
 - Type: File
-- Value: Select an audio file (WAV, MP3, MP4, FLAC)
+- Value: Select `test-data/traffic-offence-report.wav` or any audio file (WAV, MP3, MP4, FLAC)
 
 **Test Script:**
 ```javascript
@@ -236,10 +238,84 @@ pm.test("Audio parsing successful", function () {
     pm.expect(responseJson).to.have.property('text');
     pm.expect(responseJson).to.have.property('extracted_info');
     pm.expect(responseJson).to.have.property('processed_output');
+    pm.expect(responseJson).to.have.property('has_audio');
 });
 
-pm.test("Response time is acceptable", function () {
-    pm.expect(pm.response.responseTime).to.be.below(120000); // 2 minutes
+pm.test("Audio transcription working", function () {
+    const responseJson = pm.response.json();
+    pm.expect(responseJson.text).to.be.a('string');
+    pm.expect(responseJson.text.length).to.be.above(0);
+    pm.expect(responseJson.has_audio).to.be.true;
+});
+
+pm.test("AI extraction from audio working", function () {
+    const responseJson = pm.response.json();
+    const extracted = responseJson.extracted_info;
+    
+    // Should extract meaningful information from traffic offence report
+    const hasTrafficInfo = 
+        extracted.hasOwnProperty('driver_name') ||
+        extracted.hasOwnProperty('vehicle_make') ||
+        extracted.hasOwnProperty('vehicle_registration') ||
+        extracted.hasOwnProperty('offence');
+    
+    pm.expect(hasTrafficInfo).to.be.true;
+});
+
+pm.test("Response time acceptable for audio processing", function () {
+    pm.expect(pm.response.responseTime).to.be.below(120000); // 2 minutes for full audio pipeline
+});
+```
+
+**Expected Response (using traffic-offence-report.wav):**
+```json
+{
+  "id": "68cda46e730539f1afe6aea7",
+  "text": "Add Traffic Offence Report. Offence Occurred at 10:00am on 15/05/2025. Driver name is James Smith he is a male born 12/02/2000. Address 1, High Street, Slough. Location of Offence Oxford Road, Cheltenham. Vehicle Registration OU18ZFB a blue BMW 420. Offence is No Seat Belt.",
+  "processed_output": "Offence Category: No Seat Belt\nDriver Name: James Smith\nDate Of Birth: 12/02/2000\nGender: Male\nAddress: 1 High Street, Slough\nLocation Of Offence: Oxford Road, Cheltenham\nOffence Occurred At: 10:00am on 15/05/2025\nOffence: No Seat Belt\nVehicle Registration: OU18ZFB\nVehicle Make: BMW\nVehicle Color: Blue\nVehicle Model: 420",
+  "extracted_info": {
+    "offence_category": "No Seat Belt",
+    "driver_name": "James Smith",
+    "date_of_birth": "12/02/2000",
+    "gender": "Male",
+    "address": "1 High Street, Slough",
+    "location_of_offence": "Oxford Road, Cheltenham",
+    "offence_occurred_at": "10:00am on 15/05/2025",
+    "offence": "No Seat Belt",
+    "vehicle_registration": "OU18ZFB",
+    "vehicle_make": "BMW",
+    "vehicle_color": "Blue",
+    "vehicle_model": "420"
+  },
+  "has_audio": true
+}
+```
+
+### Test 7: Parse Mixed Input (Text + Audio Priority Test)
+
+**Endpoint:** `POST {{officer_api_base_url}}/api/parse-message`
+
+**Headers:**
+```
+Content-Type: multipart/form-data
+Authorization: Bearer {{admin_token}}
+```
+
+**Body (form-data):**
+- Key: `message`
+- Type: Text
+- Value: `This text should be ignored when audio is present`
+- Key: `audio_message`
+- Type: File
+- Value: Select `test-data/traffic-offence-report.wav`
+
+**Test Script:**
+```javascript
+pm.test("Audio takes priority over text", function () {
+    pm.response.to.have.status(200);
+    const responseJson = pm.response.json();
+    pm.expect(responseJson.has_audio).to.be.true;
+    pm.expect(responseJson.text).to.not.equal("This text should be ignored when audio is present");
 });
 ```
 
@@ -409,11 +485,11 @@ pm.test("Users list retrieved", function () {
 });
 ```
 
-## 🎤 Speech2Text Service Tests
+## 🎤 Speech2Text Service Tests (Updated with JWT Authentication)
 
 ### Test 12: Speech2Text Health Check
 
-**Endpoint:** `GET {{speech_url}}/health`
+**Endpoint:** `GET {{speech_url}}/public/health`
 
 **Headers:** None required
 
@@ -426,62 +502,90 @@ pm.test("Speech2Text service healthy", function () {
     pm.expect(responseJson.status).to.eql('healthy');
 });
 
-pm.test("Ollama status included", function () {
+pm.test("Ollama and dependencies status included", function () {
     const responseJson = pm.response.json();
     pm.expect(responseJson).to.have.property('ollama');
     pm.expect(responseJson.ollama).to.have.property('status');
+    pm.expect(responseJson).to.have.property('dependencies');
+    pm.expect(responseJson.dependencies).to.have.property('ffmpeg');
 });
 ```
 
-### Test 13: Direct Audio Conversion
+### Test 13: Direct Audio Conversion (JWT Authentication)
 
 **Endpoint:** `POST {{speech_url}}/convert`
 
 **Headers:**
 ```
-Authorization: Bearer {{speech_token}}
+Authorization: Bearer {{admin_token}}
 Content-Type: multipart/form-data
 ```
 
 **Body (form-data):**
 - Key: `audio_file`
 - Type: File
-- Value: Select an audio file
+- Value: Select `test-data/traffic-offence-report.wav`
 
 **Test Script:**
 ```javascript
-pm.test("Audio conversion successful", function () {
+pm.test("Audio conversion successful with JWT", function () {
     pm.response.to.have.status(200);
     const responseJson = pm.response.json();
     pm.expect(responseJson).to.have.property('text');
-    pm.expect(responseJson).to.have.property('processed_output');
+    pm.expect(responseJson).to.have.property('file_id');
+    pm.expect(responseJson).to.have.property('timestamp');
+});
+
+pm.test("Transcribed text is meaningful", function () {
+    const responseJson = pm.response.json();
+    pm.expect(responseJson.text).to.be.a('string');
+    pm.expect(responseJson.text.length).to.be.above(10); // Should have substantial content
+    
+    // For traffic-offence-report.wav, should contain traffic-related terms
+    if (responseJson.text.includes('Traffic') || responseJson.text.includes('Offence')) {
+        pm.expect(responseJson.text).to.satisfy(text => 
+            text.includes('Traffic') || text.includes('James Smith') || text.includes('BMW')
+        );
+    }
 });
 ```
 
-### Test 14: Direct Text Processing
+### Test 14: Direct Text Processing (JWT Authentication)
 
 **Endpoint:** `POST {{speech_url}}/process-text`
 
 **Headers:**
 ```
-Authorization: Bearer {{speech_token}}
+Authorization: Bearer {{admin_token}}
 Content-Type: application/json
 ```
 
 **Body (JSON):**
 ```json
 {
-  "text": "Officer Smith observed a white BMW speeding at 70 mph in a 55 mph zone on Highway 101"
+  "text": "Officer Smith observed a white BMW speeding at 70 mph in a 55 mph zone on Highway 101 with license plate ABC123. Driver was identified as John Doe, male, DOB 01/15/1985."
 }
 ```
 
 **Test Script:**
 ```javascript
-pm.test("Text processing successful", function () {
+pm.test("Text processing successful with JWT", function () {
     pm.response.to.have.status(200);
     const responseJson = pm.response.json();
     pm.expect(responseJson).to.have.property('text');
     pm.expect(responseJson).to.have.property('processed_output');
+});
+
+pm.test("AI processing extracts structured information", function () {
+    const responseJson = pm.response.json();
+    pm.expect(responseJson.processed_output).to.be.a('string');
+    pm.expect(responseJson.processed_output.length).to.be.above(0);
+    
+    // Should structure the information
+    const output = responseJson.processed_output.toLowerCase();
+    pm.expect(output).to.satisfy(text => 
+        text.includes('vehicle') || text.includes('driver') || text.includes('bmw')
+    );
 });
 ```
 
