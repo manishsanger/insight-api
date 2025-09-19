@@ -1,0 +1,120 @@
+{
+  "info": {
+    "name": "Car Identifier Service",
+    "description": "API collection for Car Identifier Service - Vehicle image analysis using Gemma3:12b vision model",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8653/api",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "noauth"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/public/health",
+          "host": ["{{base_url}}"],
+          "path": ["public", "health"]
+        }
+      }
+    },
+    {
+      "name": "Identify Vehicle from Image",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "image",
+              "type": "file",
+              "src": "/path/to/vehicle/image.jpg"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/public/car-identifier",
+          "host": ["{{base_url}}"],
+          "path": ["public", "car-identifier"]
+        }
+      }
+    },
+    {
+      "name": "Get Extraction History",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/extractions?page=1&per_page=10",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "extractions"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "per_page",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Extraction by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/extractions/{{extraction_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "extractions", "{{extraction_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Delete Extraction",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/extractions/{{extraction_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "extractions", "{{extraction_id}}"]
+        }
+      }
+    }
+  ]
+}

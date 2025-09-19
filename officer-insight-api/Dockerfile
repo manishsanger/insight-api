@@ -14,8 +14,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create data directory
-RUN mkdir -p /app/data
+# Create data directories for image storage
+RUN mkdir -p /app/data/images
+
+# Set proper permissions
+RUN chmod -R 755 /app/data
 
 # Expose port
 EXPOSE 8650

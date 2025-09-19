@@ -567,8 +567,8 @@ curl http://localhost:8652/api/health
 
 ### Postman Collection
 Import the provided Postman collection for comprehensive API testing:
-- Collection file: `postman/Officer_Insight_API.postman_collection.json`
-- Environment file: `postman/Officer_Insight_API.postman_environment.json`
+- Collection file: `postman/Officer-Insight-API-Complete.json`
+- Environment file: `postman/Insight-API-Local-Environment.json`
 
 ### Automated Testing
 ```bash

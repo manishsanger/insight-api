@@ -28,6 +28,10 @@ services:
       SPEECH2TEXT_API_URL: http://speech2text-service:8652
       SPEECH2TEXT_API_TOKEN: insight_speech_token_2024
       OLLAMA_URL: http://host.docker.internal:11434
+      # Image management configuration
+      IMAGES_UPLOAD_BASE_PATH: /app/data/images
+      IMAGES_ALLOWED_EXTENSIONS: jpg,jpeg,png,gif,bmp,tiff,webp
+      IMAGES_MAX_FILE_SIZE: 16777216  # 16MB
     depends_on:
       - mongodb
       - speech2text-service

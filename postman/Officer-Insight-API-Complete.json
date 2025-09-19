@@ -1,0 +1,680 @@
+{
+  "info": {
+    "name": "Officer Insight API - Complete Collection",
+    "description": "Complete API collection for Officer Insight API including authentication, text/audio processing, image management, person management, and vehicle management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8650/api",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "noauth"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Set up common variables",
+          "pm.globals.set(\"timestamp\", new Date().toISOString());"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has access_token\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('access_token');",
+                  "    pm.collectionVariables.set('admin_token', jsonData.access_token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"Apple@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Checks",
+      "item": [
+        {
+          "name": "Service Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/public/health",
+              "host": ["{{base_url}}"],
+              "path": ["public", "health"]
+            }
+          }
+        },
+        {
+          "name": "Images Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/images/health",
+              "host": ["{{base_url}}"],
+              "path": ["images", "health"]
+            }
+          }
+        },
+        {
+          "name": "Persons Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/persons/health",
+              "host": ["{{base_url}}"],
+              "path": ["persons", "health"]
+            }
+          }
+        },
+        {
+          "name": "Vehicles Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/vehicles/health",
+              "host": ["{{base_url}}"],
+              "path": ["vehicles", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Image Management",
+      "item": [
+        {
+          "name": "Upload Images",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "/path/to/test/image.jpg"
+                },
+                {
+                  "key": "user_id",
+                  "value": "688cc7e0127d73f6377a35c4",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "admin",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/images/upload",
+              "host": ["{{base_url}}"],
+              "path": ["images", "upload"]
+            }
+          }
+        },
+        {
+          "name": "List Images",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/images/list?page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["images", "list"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Images by IDs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"image_ids\": [\"image_id_1\", \"image_id_2\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/images/get-by-ids",
+              "host": ["{{base_url}}"],
+              "path": ["images", "get-by-ids"]
+            }
+          }
+        },
+        {
+          "name": "Get Image Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/images/{{image_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["images", "{{image_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Image",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/images/{{image_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["images", "{{image_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Delete Images",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"image_ids\": [\"image_id_1\", \"image_id_2\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/images/bulk-delete",
+              "host": ["{{base_url}}"],
+              "path": ["images", "bulk-delete"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Person Management",
+      "item": [
+        {
+          "name": "Create Person",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"date_of_birth\": \"1990-05-15\",\n    \"gender\": \"Male\",\n    \"address\": \"123 Main St, Anytown, USA\",\n    \"phone\": \"+1-555-0123\",\n    \"email\": \"john.doe@example.com\",\n    \"notes\": \"Test person record\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/persons/create",
+              "host": ["{{base_url}}"],
+              "path": ["persons", "create"]
+            }
+          }
+        },
+        {
+          "name": "List Persons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/persons/list?page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["persons", "list"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Persons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/persons/search?name=John&page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["persons", "search"],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "John"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Person Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/persons/{{person_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["persons", "{{person_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Person",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Smith\",\n    \"phone\": \"+1-555-9999\",\n    \"notes\": \"Updated person record\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/persons/{{person_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["persons", "{{person_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Soft Delete Person",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/persons/{{person_id}}/soft-delete",
+              "host": ["{{base_url}}"],
+              "path": ["persons", "{{person_id}}", "soft-delete"]
+            }
+          }
+        },
+        {
+          "name": "Restore Person",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/persons/{{person_id}}/restore",
+              "host": ["{{base_url}}"],
+              "path": ["persons", "{{person_id}}", "restore"]
+            }
+          }
+        },
+        {
+          "name": "Hard Delete Person",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/persons/{{person_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["persons", "{{person_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vehicle Management",
+      "item": [
+        {
+          "name": "Create Vehicle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"vehicle_registration_number\": \"ABC123\",\n    \"make\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"color\": \"Blue\",\n    \"year\": 2020,\n    \"owner_name\": \"John Doe\",\n    \"owner_phone\": \"+1-555-0123\",\n    \"notes\": \"Test vehicle record\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vehicles/create",
+              "host": ["{{base_url}}"],
+              "path": ["vehicles", "create"]
+            }
+          }
+        },
+        {
+          "name": "List Vehicles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vehicles/list?page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["vehicles", "list"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Vehicles by VRN",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vehicles/search?vrn=ABC&page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["vehicles", "search"],
+              "query": [
+                {
+                  "key": "vrn",
+                  "value": "ABC"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Vehicle Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vehicles/{{vehicle_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["vehicles", "{{vehicle_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Vehicle",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"make\": \"Honda\",\n    \"model\": \"Accord\",\n    \"color\": \"Red\",\n    \"year\": 2021,\n    \"notes\": \"Updated vehicle record\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/vehicles/{{vehicle_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["vehicles", "{{vehicle_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Soft Delete Vehicle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vehicles/{{vehicle_id}}/soft-delete",
+              "host": ["{{base_url}}"],
+              "path": ["vehicles", "{{vehicle_id}}", "soft-delete"]
+            }
+          }
+        },
+        {
+          "name": "Restore Vehicle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vehicles/{{vehicle_id}}/restore",
+              "host": ["{{base_url}}"],
+              "path": ["vehicles", "{{vehicle_id}}", "restore"]
+            }
+          }
+        },
+        {
+          "name": "Hard Delete Vehicle",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vehicles/{{vehicle_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["vehicles", "{{vehicle_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Text & Audio Processing",
+      "item": [
+        {
+          "name": "Parse Text Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"message\": \"I saw a blue Toyota Camry with license plate ABC123 speeding on Main Street. The driver was a young male in his 20s.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/public/parse-message",
+              "host": ["{{base_url}}"],
+              "path": ["public", "parse-message"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

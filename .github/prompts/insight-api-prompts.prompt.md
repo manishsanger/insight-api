@@ -49,6 +49,18 @@ curl -X POST "http://localhost:8650/api/auth/login" \
 curl -H "Authorization: Bearer <token>" http://localhost:8650/api/admin/dashboard
 ```
 
+### Postman Testing Infrastructure
+**Comprehensive testing collections available in `postman/` directory:**
+- `Officer-Insight-API-Complete.json` - Full Officer API testing suite
+- `Car-Identifier-Service.json` - Vehicle analysis testing
+- `Doc-Reader-Service.json` - Document parsing testing
+- `Speech2Text-Service.json` - Audio transcription testing
+- `Complete-System-Collection.json` - System-wide integration tests
+- `Insight-API-Local-Environment.json` - Environment configuration
+- `TESTING_GUIDE.md` - Step-by-step testing instructions
+
+**Quick Testing**: Import environment + collection, run authentication first, then test endpoints systematically
+
 ## AI Model Integration Patterns
 
 ### Vision Model Processing (car-identifier, doc-reader)

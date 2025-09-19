@@ -1,0 +1,12 @@
+PASSPORT
+
+Document Type: Passport
+Name: John Smith  
+Date of Birth: 15/03/1985
+Country: United Kingdom
+Date of Issue: 01/06/2020
+Expiry Date: 31/05/2030
+Gender: Male
+Nationality: British
+Place of Birth: London
+Issuing Authority: HM Passport Office

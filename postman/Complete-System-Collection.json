@@ -1,0 +1,375 @@
+{
+  "info": {
+    "name": "Insight API - Complete System Collection",
+    "description": "Complete system-wide API collection for all Insight API microservices including Officer Insight API, Car Identifier, Doc Reader, Speech2Text, and Admin UI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
+  },
+  "variable": [
+    {
+      "key": "officer_api_url",
+      "value": "http://localhost:8650/api",
+      "type": "string"
+    },
+    {
+      "key": "car_identifier_url",
+      "value": "http://localhost:8653/api",
+      "type": "string"
+    },
+    {
+      "key": "doc_reader_url",
+      "value": "http://localhost:8654/api",
+      "type": "string"
+    },
+    {
+      "key": "speech2text_url",
+      "value": "http://localhost:8652/api",
+      "type": "string"
+    },
+    {
+      "key": "admin_ui_url",
+      "value": "http://localhost:8651",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "speech_token",
+      "value": "insight_speech_token_2024",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "noauth"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Set up common variables",
+          "pm.globals.set(\"timestamp\", new Date().toISOString());",
+          "",
+          "// Log the request",
+          "console.log(`🚀 Running: ${pm.info.requestName}`);",
+          "console.log(`📍 URL: ${pm.request.url}`);"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "System Health Checks",
+      "item": [
+        {
+          "name": "Officer Insight API Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{officer_api_url}}/public/health",
+              "host": ["{{officer_api_url}}"],
+              "path": ["public", "health"]
+            }
+          }
+        },
+        {
+          "name": "Car Identifier Service Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{car_identifier_url}}/public/health",
+              "host": ["{{car_identifier_url}}"],
+              "path": ["public", "health"]
+            }
+          }
+        },
+        {
+          "name": "Doc Reader Service Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{doc_reader_url}}/public/health",
+              "host": ["{{doc_reader_url}}"],
+              "path": ["public", "health"]
+            }
+          }
+        },
+        {
+          "name": "Speech2Text Service Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{speech2text_url}}/health",
+              "host": ["{{speech2text_url}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Admin UI Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{admin_ui_url}}/health",
+              "host": ["{{admin_ui_url}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Officer API - Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has access_token\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('access_token');",
+                  "    pm.collectionVariables.set('admin_token', jsonData.access_token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"Apple@123\"\n}"
+            },
+            "url": {
+              "raw": "{{officer_api_url}}/auth/login",
+              "host": ["{{officer_api_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Officer Insight API",
+      "item": [
+        {
+          "name": "Parse Text Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"message\": \"I saw a blue Toyota Camry with license plate ABC123 speeding on Main Street. The driver was a young male in his 20s.\"\n}"
+            },
+            "url": {
+              "raw": "{{officer_api_url}}/public/parse-message",
+              "host": ["{{officer_api_url}}"],
+              "path": ["public", "parse-message"]
+            }
+          }
+        },
+        {
+          "name": "Create Person",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"date_of_birth\": \"1990-05-15\",\n    \"gender\": \"Male\",\n    \"address\": \"123 Main St, Anytown, USA\",\n    \"phone\": \"+1-555-0123\",\n    \"email\": \"john.doe@example.com\",\n    \"notes\": \"Test person record\"\n}"
+            },
+            "url": {
+              "raw": "{{officer_api_url}}/persons/create",
+              "host": ["{{officer_api_url}}"],
+              "path": ["persons", "create"]
+            }
+          }
+        },
+        {
+          "name": "Create Vehicle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"vehicle_registration_number\": \"ABC123\",\n    \"make\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"color\": \"Blue\",\n    \"year\": 2020,\n    \"owner_name\": \"John Doe\",\n    \"owner_phone\": \"+1-555-0123\",\n    \"notes\": \"Test vehicle record\"\n}"
+            },
+            "url": {
+              "raw": "{{officer_api_url}}/vehicles/create",
+              "host": ["{{officer_api_url}}"],
+              "path": ["vehicles", "create"]
+            }
+          }
+        },
+        {
+          "name": "Upload Images",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "/path/to/test/image.jpg"
+                },
+                {
+                  "key": "user_id",
+                  "value": "688cc7e0127d73f6377a35c4",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "admin",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{officer_api_url}}/images/upload",
+              "host": ["{{officer_api_url}}"],
+              "path": ["images", "upload"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Car Identifier Service",
+      "item": [
+        {
+          "name": "Identify Vehicle from Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "/path/to/vehicle/image.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{car_identifier_url}}/public/car-identifier",
+              "host": ["{{car_identifier_url}}"],
+              "path": ["public", "car-identifier"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Doc Reader Service",
+      "item": [
+        {
+          "name": "Extract Document Information",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/document/image.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{doc_reader_url}}/public/extract-document",
+              "host": ["{{doc_reader_url}}"],
+              "path": ["public", "extract-document"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Speech2Text Service",
+      "item": [
+        {
+          "name": "Convert Audio to Text",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Token",
+                "value": "{{speech_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "src": "/path/to/audio/file.wav"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{speech2text_url}}/convert",
+              "host": ["{{speech2text_url}}"],
+              "path": ["convert"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

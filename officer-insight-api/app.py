@@ -12,6 +12,11 @@ import re
 import json
 from bson import ObjectId
 
+# Import new modules
+from images import images_ns
+from person import person_ns
+from vehicle import vehicle_ns
+
 # Configure custom JSON encoder
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -47,6 +52,11 @@ app.config['MONGO_URI'] = os.getenv('MONGODB_URI', 'mongodb://admin:Apple%40123@
 app.config['SPEECH2TEXT_API_URL'] = os.getenv('SPEECH2TEXT_API_URL', 'http://speech2text-service:8652')
 app.config['SPEECH2TEXT_API_TOKEN'] = os.getenv('SPEECH2TEXT_API_TOKEN', 'insight_speech_token_2024')
 app.config['OLLAMA_URL'] = os.getenv('OLLAMA_URL', 'http://host.docker.internal:11434')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Ensure data directory exists for image storage
+UPLOAD_BASE_PATH = '/app/data/images'
+os.makedirs(UPLOAD_BASE_PATH, exist_ok=True)
 
 # Initialize extensions
 mongo = PyMongo(app)
@@ -93,6 +103,11 @@ public_ns = Namespace('public', description='Public API operations')
 api.add_namespace(auth_ns, path='/auth')
 api.add_namespace(admin_ns, path='/admin')
 api.add_namespace(public_ns, path='/public')
+
+# Add new namespaces for the new modules
+api.add_namespace(images_ns, path='/images')
+api.add_namespace(person_ns, path='/persons')
+api.add_namespace(vehicle_ns, path='/vehicles')
 
 # Models for Swagger documentation
 login_model = api.model('Login', {

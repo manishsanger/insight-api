@@ -1,0 +1,64 @@
+{
+  "info": {
+    "name": "Speech2Text Service",
+    "description": "API collection for Speech to Text Service - Whisper-based audio transcription with Ollama text processing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8652/api",
+      "type": "string"
+    },
+    {
+      "key": "api_token",
+      "value": "insight_speech_token_2024",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "noauth"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Convert Audio to Text",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Token",
+            "value": "{{api_token}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "audio",
+              "type": "file",
+              "src": "/path/to/audio/file.wav"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/convert",
+          "host": ["{{base_url}}"],
+          "path": ["convert"]
+        }
+      }
+    }
+  ]
+}

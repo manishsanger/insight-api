@@ -9,10 +9,18 @@ Officer Insight API is a comprehensive microservices-based system designed to as
 The system consists of five main microservices:
 
 ### 🔧 Officer Insight API (Port 8650)
-- **Purpose**: Core API service for text/audio processing and system coordination
-- **Features**: JWT authentication, user management, text extraction, audio-to-text conversion
+- **Purpose**: Core API service for text/audio processing, image management, person management, and vehicle management
+- **Features**: 
+  - JWT authentication and user management
+  - Text extraction and audio-to-text conversion
+  - **Image Management System**: Upload, store, and serve images with organized file structure
+  - **Person Management**: Complete CRUD operations for person records with photo attachments
+  - **Vehicle Management**: Complete CRUD operations for vehicle records with photo attachments
+  - Soft delete capabilities for data preservation
+  - RESTful APIs with comprehensive pagination and search
 - **AI Model**: Llama3.2:latest for text processing
 - **Database**: MongoDB for data persistence
+- **Storage**: Persistent file storage for images with date-based organization
 
 ### 🚗 Car Identifier Service (Port 8653)
 - **Purpose**: Specialized AI-powered vehicle identification from images
@@ -200,6 +208,17 @@ MAX_CONTENT_LENGTH=16777216               # 16MB file size limit
 OLLAMA_URL=http://host.docker.internal:11434
 SPEECH2TEXT_API_URL=http://speech2text-service:8652
 MONGODB_URI=mongodb://admin:Apple%40123@mongodb:27017/insight_db?authSource=admin
+
+# Image Management Configuration (New)
+IMAGES_UPLOAD_BASE_PATH=/app/data/images   # Base directory for image storage
+IMAGES_ALLOWED_EXTENSIONS=jpg,jpeg,png,gif,bmp,tiff,webp  # Allowed file types
+IMAGES_MAX_FILE_SIZE=16777216              # Maximum file size in bytes (16MB)
+```
+
+#### Speech2Text Service
+```bash
+API_TOKEN=insight_speech_token_2024        # Authentication token
+WHISPER_MODEL=base                         # Whisper model size
 ```
 
 ### Extraction Parameters
@@ -238,6 +257,87 @@ The system supports configurable extraction fields:
 - `nationality` - Nationality extraction
 - `pin_code` - Postal/ZIP code recognition
 
+### Image Management Configuration
+
+The Officer Insight API image management system supports configurable parameters through environment variables.
+
+#### Configurable Parameters
+
+**1. Upload Base Path**
+- **Environment Variable**: `IMAGES_UPLOAD_BASE_PATH`
+- **Default**: `/app/data/images`
+- **Description**: Base directory for storing uploaded images
+- **Example**: `IMAGES_UPLOAD_BASE_PATH=/custom/upload/path`
+
+**2. Allowed File Extensions**
+- **Environment Variable**: `IMAGES_ALLOWED_EXTENSIONS`
+- **Default**: `jpg,jpeg,png,gif,bmp,tiff`
+- **Description**: Comma-separated list of allowed file extensions
+- **Example**: `IMAGES_ALLOWED_EXTENSIONS=jpg,png,webp,avif`
+
+**3. Maximum File Size**
+- **Environment Variable**: `IMAGES_MAX_FILE_SIZE`
+- **Default**: `16777216` (16MB)
+- **Description**: Maximum file size in bytes
+- **Example**: `IMAGES_MAX_FILE_SIZE=33554432` (32MB)
+
+#### Customization Examples
+
+**Large File Support:**
+```yaml
+environment:
+  IMAGES_MAX_FILE_SIZE: 104857600  # 100MB
+  IMAGES_ALLOWED_EXTENSIONS: jpg,jpeg,png,gif,bmp,tiff,webp,raw,cr2,nef
+```
+
+**Restricted File Types:**
+```yaml
+environment:
+  IMAGES_ALLOWED_EXTENSIONS: jpg,png
+  IMAGES_MAX_FILE_SIZE: 5242880  # 5MB
+```
+
+**Custom Upload Directory:**
+```yaml
+environment:
+  IMAGES_UPLOAD_BASE_PATH: /mnt/shared/images
+volumes:
+  - /host/shared/images:/mnt/shared/images
+```
+
+#### API Impact
+
+These configuration changes affect the following endpoints:
+- `POST /api/images/upload` - File validation and storage
+- `GET /api/images/health` - Reports current configuration
+- `GET /api/images/serve/{path}` - File serving from configured path
+
+#### Health Check Response
+
+The health endpoint returns current configuration:
+```json
+{
+  "status": "healthy",
+  "upload_directory": "/app/data/images",
+  "allowed_extensions": ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp"],
+  "max_file_size": 16777216
+}
+```
+
+#### Validation Rules
+
+1. **File Size**: Files exceeding `IMAGES_MAX_FILE_SIZE` are rejected
+2. **File Extensions**: Only files with extensions in `IMAGES_ALLOWED_EXTENSIONS` are accepted
+3. **Upload Path**: Directory is created automatically if it doesn't exist
+4. **Security**: File names are sanitized and given unique UUIDs
+
+#### Deployment Considerations
+
+1. **Volume Mapping**: Ensure Docker volumes match `IMAGES_UPLOAD_BASE_PATH`
+2. **Permissions**: Upload directory must be writable by the application
+3. **Storage**: Consider available disk space when setting large file size limits
+4. **Security**: Restrict file extensions based on security requirements
+
 ## 🔧 Development
 
 ### Local Development Setup
@@ -273,6 +373,7 @@ cd speech2text-service && python app.py
 
 ### Testing
 
+#### Automated Testing
 ```bash
 # Test all services
 python test_deployment.py
@@ -283,6 +384,28 @@ curl http://localhost:8653/api/public/health
 curl http://localhost:8650/api/public/health
 curl http://localhost:8652/api/health
 ```
+
+#### API Testing with Postman Collections
+
+The `postman/` directory contains comprehensive collections for testing all services:
+
+**Service-Specific Collections:**
+- `Officer-Insight-API-Complete.json` - Complete Officer API testing (Images, Persons, Vehicles)
+- `Car-Identifier-Service.json` - Vehicle identification service
+- `Doc-Reader-Service.json` - Document parsing service  
+- `Speech2Text-Service.json` - Audio transcription service
+
+**System Collections:**
+- `Complete-System-Collection.json` - Full integration testing across all services
+- `Insight-API-Test-Collection.json` - Legacy comprehensive test suite
+
+**Quick Start:**
+1. Import desired collection(s) into Postman
+2. Run "Admin Login" to get authentication token
+3. Execute health checks to verify all services
+4. Test individual features as needed
+
+See [Postman Collections Guide](./postman/README.md) for detailed instructions.
 
 ## 📊 Monitoring & Health Checks
 
@@ -378,6 +501,7 @@ This script will:
 - [Document Reader Service](./doc-reader-service/README.md) - Document parsing service guide
 - [Deployment Guide](./DEPLOYMENT.md) - Production deployment instructions
 - [Postman Testing](./POSTMAN_TESTING_GUIDE.md) - API testing with Postman
+- [Postman Collections](./postman/README.md) - Complete collection guide
 - [Changelog](./CHANGELOG.md) - Version history and updates
 - [Project Status](./PROJECT_STATUS.md) - Current development status
 
